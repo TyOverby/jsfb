@@ -16,22 +16,49 @@ async function main() {
         module.instance.exports.fill_simd(r, g, b, w * h);
     }
 
+    function line(r, g, b, x0, y0, x1, y1) {
+        module.instance.exports.line(r, g, b, x0, y0, x1, y1, w);
+    }
+
     let b = true;
     function loop() {
-        let before = performance.now();
         resizeCanvasToDisplaySize(canvas);
+
+        ctx.fillStyle = `rgb(255,255,255)`;
+        ctx.fillRect(0, 0, w, h);
+
+        let before = performance.now();
         if (b) {
-            fillWasm(100, 0, 0);
+            fillWasm(10, 50, 10);
         } else {
-            fillWasm(101, 0, 0);
+            fillWasm(10, 10, 50);
         }
         b = !b;
+
+        // star burst
+        for (var theta = 0; theta < 2 * Math.PI; theta += (Math.PI / 10)) {
+            let cx = 100, cy = 100;
+            let dx = cx + 50 * Math.cos(theta), dy = cy + 50 * Math.sin(theta);
+            line(255, 250, 100, cx, cy, dx, dy);
+        }
+
+        // sin wave
+        var prev_x = 100;
+        var prev_y = 200 + 50 * Math.cos(10);
+        for (var x = 100; x < 300; x ++) {
+            var y = 200 + (50 * Math.cos(x / 10));
+            line(255, 250, 100, prev_x, prev_y, x, y);
+            prev_x = x;
+            prev_y = y;
+        }
 
         ctx.putImageData(img_buffer, 0, 0);
         let after = performance.now();
         let delta = after - before;
         console.log(delta);
-        window.requestAnimationFrame(loop);
+
+        setTimeout(loop, 1000);
+        //window.requestAnimationFrame(loop);
     }
 
     window.requestAnimationFrame(loop);

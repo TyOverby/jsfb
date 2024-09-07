@@ -53,9 +53,9 @@ function loop() {
     let before = performance.now();
     resizeCanvasToDisplaySize(canvas);
     if (b) {
-        fillRect(255, 0, 0);
+        fillRect(10, 50, 10);
     } else {
-        fillRect(250, 0, 0);
+        fillRect(10, 10, 50);
     }
     b = !b;
 
@@ -63,7 +63,9 @@ function loop() {
     let after = performance.now();
     let delta = after - before;
     console.log(delta);
-    window.requestAnimationFrame(loop);
+
+    setTimeout(loop, 1000);
+    //window.requestAnimationFrame(loop);
 }
 
 window.requestAnimationFrame(loop);

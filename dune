@@ -1,12 +1,12 @@
 (rule
- (deps ./binaryen-version_118/bin/wasm-as main.wat)
+ (deps ./binaryen/bin/wasm-as main.wat)
  (target main.wasm)
  (mode promote)
  (action
   (bash "%{deps} --enable-simd")))
 
 (rule
- (deps ./binaryen-version_118/bin/wasm-opt main.wasm)
+ (deps ./binaryen/bin/wasm-opt main.wasm)
  (target main.opt.wasm)
  (mode promote)
  (action

@@ -1,4 +1,5 @@
 // init with the default canvas size
+// TODO: weak map?
 const canvasToDisplaySizeMap = new Map();
 
 function onResize(entries) {
@@ -32,6 +33,7 @@ function onResize(entries) {
 }
 
 const resizeObserver = new ResizeObserver(onResize);
+
 function observe(canvas) {
     try {
         // only call us of the number of device pixels changed

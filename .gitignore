@@ -1,3 +1,5 @@
 _opam
 _build
 binaryen-version_118
+binaryen
+.DS_Store
