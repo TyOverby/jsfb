@@ -20,6 +20,10 @@ async function main() {
         module.instance.exports.line(r, g, b, x0, y0, x1, y1, w);
     }
 
+    function quad(r, g, b, x0, y0, x1, y1, x2, y2, x3, y3) {
+        module.instance.exports.quad(x0, y0, x1, y1, x2, y2, x3, y3, r, g, b, w, h);
+    }
+
     let b = true;
     function loop() {
         resizeCanvasToDisplaySize(canvas);
@@ -34,6 +38,14 @@ async function main() {
             fillWasm(10, 10, 50);
         }
         b = !b;
+
+        // quad
+        quad(250,250,250, 0, 0,   50, 10,   100, 100,   10, 50);
+
+        quad(250,0,250, 0, 100,   100, 100,   100, 200,   0, 200);
+        quad(0,0,250, 100, 100,   200, 100,   200, 200,   100, 200);
+        console.log("quad");
+
 
         // star burst
         for (var theta = 0; theta < 2 * Math.PI; theta += (Math.PI / 10)) {

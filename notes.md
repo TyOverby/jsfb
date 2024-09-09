@@ -2,3 +2,5 @@
 
 - https://github.com/dse/dse-typewriter-bitmap-font
 - https://www.sctheblog.com/blog/hair-software-rasterize/
+- https://fgiesen.wordpress.com/2013/02/10/optimizing-the-basic-rasterizer/
+- http://members.chello.at/~easyfilter/bresenham.html
