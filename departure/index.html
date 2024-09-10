@@ -1,0 +1,141 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Custom Font in Canvas</title>
+  <style>
+    @font-face {
+      font-family: 'departure';
+      src: url('./DepartureMono-Regular.woff2') format('woff2');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    canvas { width:100vw; height: 100vh; }
+    body { margin: 0; }
+  </style>
+
+  <script src="../canvas-resizer.js"> </script>
+</head>
+<body>
+  <canvas id="myCanvas" width="500" height="200"></canvas>
+
+  <script>
+    // Wait for the font to load before using it
+    observe(myCanvas);
+
+    var idx = 97;
+
+
+    document.fonts.load('11pt "departure"').then(function() {
+      var canvas = document.getElementById('myCanvas');
+      var ctx = canvas.getContext('2d', {willReadFrequently : true});
+      window.ctx = ctx;
+
+      document.body.addEventListener('keydown', function(e) {
+        if (e && e.key) {
+          if (e.key === "ArrowRight") {
+            idx ++;
+          } else if (e.key === "ArrowLeft") {
+            idx --;
+          } else {
+            console.log(e);
+            if (e.key.length === 1) {
+              idx = e.key.charCodeAt(0);
+            }
+          }
+
+          ctx.font = `${1*11}px departure`;
+          const textMetrics = ctx.measureText(String.fromCharCode(idx));
+          //console.log(textMetrics);
+          loop();
+        }
+      });
+
+      let all_metrics = [];
+
+      
+      function loop() {
+        resizeCanvasToDisplaySize(myCanvas);
+        ctx.clearRect(0,0, myCanvas.width,myCanvas.height);
+
+        const mult = 50;
+        ctx.font = `${mult*11}px departure`;
+        ctx.fillStyle = 'black';
+        let letter = String.fromCharCode(idx);
+        let textMetrics = ctx.measureText(letter);
+        console.log(textMetrics);
+        //ctx.fillText(letter, textMetrics.actualBoundingBoxLeft, textMetrics.actualBoundingBoxAscent);
+        ctx.fillText(letter, 0, textMetrics.fontBoundingBoxAscent - textMetrics.fontBoundingBoxDescent);
+        //window.requestAnimationFrame(loop);
+        let img_data = ctx.getImageData(0,0,canvas.width, canvas.height);
+
+        ctx.fillStyle = "red";
+        const sample_size = 10;
+        const pixel_grid = [];
+        for (var y = 0; y < textMetrics.fontBoundingBoxAscent ; y += mult) {
+          let row = ""
+          for (var x = 0; x < textMetrics.width; x += mult) {
+            let sample_y = Math.floor(y + mult / 2);
+            let sample_x = Math.floor(x + mult / 2);
+            let pos = sample_y * img_data.width + sample_x;
+            let is_black = img_data.data[pos * 4 + 3] !== 0;
+            if (is_black) {
+              row += ("X");
+            } else {
+              row += (" ");
+            }
+
+            ctx.fillRect(x + mult / 2 - sample_size / 2 , y + mult / 2 - sample_size / 2, sample_size, sample_size);
+          }
+          pixel_grid.push(row);
+        }
+
+        ctx.font = `${1*11}px departure`;
+        textMetrics = ctx.measureText(letter);
+        all_metrics.push({
+          char: letter,
+          code: idx,
+          pixels: pixel_grid,
+          width: Math.round(textMetrics.width),
+          actualBoundingBoxAscent : Math.round(textMetrics.actualBoundingBoxAscent),
+          actualBoundingBoxDescent : Math.round(textMetrics.actualBoundingBoxDescent),
+          actualBoundingBoxLeft : Math.round(textMetrics.actualBoundingBoxLeft),
+          actualBoundingBoxRight : Math.round(textMetrics.actualBoundingBoxRight),
+          alphabeticBaseline : Math.round(textMetrics.alphabeticBaseline),
+          fontBoundingBoxAscent : Math.round(textMetrics.fontBoundingBoxAscent),
+          fontBoundingBoxDescent : Math.round(textMetrics.fontBoundingBoxDescent),
+          hangingBaseline : Math.round(textMetrics.hangingBaseline),
+          ideographicBaseline : Math.round(textMetrics.ideographicBaseline),
+        })
+      }
+
+      //window.requestAnimationFrame(loop);
+
+      for (let char of "abcdefghijklmnopqrstuvwxyz") {
+        idx = char.charCodeAt(0);
+        loop();
+      }
+      console.log(JSON.stringify(all_metrics, null, 2));
+
+    });
+  </script>
+
+</body>
+</html>
+<!--
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title></title>
+        <meta charset="UTF-8">
+        <script defer src="./script.js"></script>
+        <link href="font.css" rel="stylesheet">
+    </head>
+<body>
+
+</body>
+</html>
+-->

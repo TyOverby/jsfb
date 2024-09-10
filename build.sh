@@ -10,5 +10,5 @@ set -euo pipefail
     --source-map-url "./main.wasm.map"
 
 cp main.wasm main.opt.wasm
-# ./binaryen/bin/wasm-opt main.wasm --enable-simd --enable-multivalue -O3 -o main.opt.wasm
+#./binaryen/bin/wasm-opt main.wasm --enable-simd --enable-multivalue -O3 -o main.opt.wasm
 echo "good!"
