@@ -28,8 +28,8 @@ async function main() {
         module.instance.exports.tri(x0, y0, x1, y1, x2, y2, r, g, b, w, h);
     }
 
-    function departure_a(r, g, b, x, y) {
-        module.instance.exports['$departure/a'](r,g,b,x,y,w)
+    function departure_a(r, g, b, x, y, size) {
+        module.instance.exports['$departure/a'](r,g,b,x,y,size, w)
     }
 
     fillWasm(10, 50, 10);
@@ -75,9 +75,14 @@ async function main() {
             prev_y = y;
         }
         // departure a
-        departure_a(255,255,255, 0, 0);
+        quad(255,255,255, 0, 250,   250, 250,   250, 500,   0, 500);
+        let offset = 20;
+        for (var size = 0; size < 10; size++) {
+            departure_a(0,0,0, offset, 275, size);
+            offset += (size * 7);
+        }
 
-        ctx.putImageData(img_buffer, 0, 0, 0,0, 250, 250);
+        ctx.putImageData(img_buffer, 0, 0, 0,0, 500, 500);
         let after = performance.now();
         let delta = after - before;
         console.log(delta);
