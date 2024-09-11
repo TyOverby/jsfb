@@ -28,6 +28,10 @@ async function main() {
         module.instance.exports.tri(x0, y0, x1, y1, x2, y2, r, g, b, w, h);
     }
 
+    function departure_a(r, g, b, x, y) {
+        module.instance.exports['$departure/a'](r,g,b,x,y,w)
+    }
+
     fillWasm(10, 50, 10);
 
     let b = true;
@@ -70,6 +74,8 @@ async function main() {
             prev_x = x;
             prev_y = y;
         }
+        // departure a
+        departure_a(255,255,255, 0, 0);
 
         ctx.putImageData(img_buffer, 0, 0, 0,0, 250, 250);
         let after = performance.now();

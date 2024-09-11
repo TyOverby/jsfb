@@ -1,15 +1,18 @@
 (module
   (type $0 (func (param i32 i32) (result i32)))
   (memory $0 540)
-  (export "fill" (func $module/fill))
-  (export "fill_simd" (func $module/fill_simd))
-  (export "line" (func $module/line))
-  (export "quad" (func $module/quad))
-  (export "tri" (func $module/tri))
+  (export "put_pixel_raw" (func $lux/put_pixel_raw))
+  (export "rgb2int" (func $lux/rgb2int))
+
+  (export "fill" (func $lux/fill))
+  (export "fill_simd" (func $lux/fill_simd))
+  (export "line" (func $lux/line))
+  (export "quad" (func $lux/quad))
+  (export "tri" (func $lux/tri))
   (export "memory" (memory $0))
 
   ;; Combine rgb byte components into a single i32 for the pixel
-  (func $module/rgb2int
+  (func $lux/rgb2int
       (param $r i32) 
       (param $g i32) 
       (param $b i32) 
@@ -21,7 +24,14 @@
     (local.set $rgba (i32.or (local.get $rgba) (i32.shl (local.get $g) (i32.const 8))))
     (local.get $rgba))
 
-  (func $module/put_pixel
+  (func $lux/put_pixel_raw
+      (param $offset i32) 
+      (param $rgba i32) 
+    (i32.store 
+      (i32.mul (local.get $offset) (i32.const 4)) 
+      (local.get $rgba)))
+
+  (func $lux/put_pixel
       (param $rgba i32) 
       (param $x i32) 
       (param $y i32) 
@@ -32,12 +42,9 @@
       (i32.add 
         (i32.mul (local.get $w) (local.get $y))
         (local.get $x)))
-    
-    (i32.store 
-      (i32.mul (local.get $offset) (i32.const 4)) 
-      (local.get $rgba)))
+    (call $lux/put_pixel_raw (local.get $offset) (local.get $rgba)))
 
-  (func $module/fill 
+  (func $lux/fill 
         (param $r i32) 
         (param $g i32) 
         (param $b i32) 
@@ -46,7 +53,7 @@
     (local $i i32)
 
     (local.set $rgba 
-      (call $module/rgb2int 
+      (call $lux/rgb2int 
             (local.get $r) 
             (local.get $g)
             (local.get $b)))
@@ -62,7 +69,7 @@
   ;; TODO: implement a new "fill" function that fills the first line
   ;; and then uses bulk-memory copy operators to fill the rest of 
   ;; the lines
-  (func $module/fill_simd 
+  (func $lux/fill_simd 
         (param $r i32) 
         (param $g i32) 
         (param $b i32) 
@@ -74,7 +81,7 @@
     (local.set $pixels (i32.div_u (local.get $pixels) (i32.const 4)))
 
     (local.set $rgba 
-      (call $module/rgb2int 
+      (call $lux/rgb2int 
             (local.get $r) 
             (local.get $g)
             (local.get $b)))
@@ -91,7 +98,7 @@
         (br_if $loop (i32.ne (local.get $i) (local.get $pixels)))))
 
 
-  (func $module/line_low
+  (func $lux/line_low
     (param $r i32) 
     (param $g i32) 
     (param $b i32) 
@@ -112,7 +119,7 @@
 
 
     (local.set $rgba 
-      (call $module/rgb2int 
+      (call $lux/rgb2int 
             (local.get $r) 
             (local.get $g)
             (local.get $b)))
@@ -147,7 +154,7 @@
     (local.set $x (local.get $x0))
     (loop $loop 
         ;; plot(x, y)
-        (call $module/put_pixel 
+        (call $lux/put_pixel 
           (local.get $rgba)
           (local.get $x)
           (local.get $y)
@@ -177,7 +184,7 @@
        (local.set $x (i32.add (i32.const 1) (local.get $x)))
        (br_if $loop (local.get $stop))))
 
-  (func $module/line_high
+  (func $lux/line_high
     (param $r i32) 
     (param $g i32) 
     (param $b i32) 
@@ -198,7 +205,7 @@
 
 
     (local.set $rgba 
-      (call $module/rgb2int 
+      (call $lux/rgb2int 
             (local.get $r) 
             (local.get $g)
             (local.get $b)))
@@ -233,7 +240,7 @@
     (local.set $y (local.get $y0))
     (loop $loop 
         ;; plot(x, y)
-        (call $module/put_pixel 
+        (call $lux/put_pixel 
           (local.get $rgba)
           (local.get $x)
           (local.get $y)
@@ -263,14 +270,14 @@
        (local.set $y (i32.add (i32.const 1) (local.get $y)))
        (br_if $loop (local.get $stop))))
 
-  (func $module/abs32
+  (func $lux/abs32
         (param $x i32)
         (result i32)
     (if (i32.lt_s (local.get $x) (i32.const 0))
       (then (local.set $x (i32.sub (i32.const 0) (local.get $x)))))
     (local.get $x))
 
-  (func $module/min32s
+  (func $lux/min32s
         (param $x i32)
         (param $y i32)
         (result i32)
@@ -278,7 +285,7 @@
       (then (local.set $x (local.get $y))))
     (local.get $x))
 
-  (func $module/max32s
+  (func $lux/max32s
         (param $x i32)
         (param $y i32)
         (result i32)
@@ -288,7 +295,7 @@
 
   ;; TODO: horizontal and vertical line specialization
 
-  (func $module/line
+  (func $lux/line
     (param $r i32) 
     (param $g i32) 
     (param $b i32) 
@@ -301,13 +308,13 @@
     ;; if abs(y1 - y0) < abs(x1 - x0)
     (if 
       (i32.le_u
-          (call $module/abs32 (i32.sub (local.get $y1) (local.get $y0)))
-          (call $module/abs32 (i32.sub (local.get $x1) (local.get $x0))))
+          (call $lux/abs32 (i32.sub (local.get $y1) (local.get $y0)))
+          (call $lux/abs32 (i32.sub (local.get $x1) (local.get $x0))))
       (then 
         ;; if x0 > x1
         (if (i32.ge_u (local.get $x0) (local.get $x1))
           ;; plotLineLow(x1, y1, x0, y0)
-          (then (call $module/line_low 
+          (then (call $lux/line_low 
                   (local.get $r)
                   (local.get $g)
                   (local.get $b)
@@ -317,7 +324,7 @@
                   (local.get $y0)
                   (local.get $w)))
           ;; plotLineLow(x0, y0, x1, y1)
-          (else (call $module/line_low 
+          (else (call $lux/line_low 
                   (local.get $r)
                   (local.get $g)
                   (local.get $b)
@@ -330,7 +337,7 @@
         ;; if y0 > y1
         (if (i32.ge_u (local.get $y0) (local.get $y1))
           ;; plotLineHigh(x1, y1, x0, y0)
-          (then (call $module/line_high
+          (then (call $lux/line_high
                   (local.get $r)
                   (local.get $g)
                   (local.get $b)
@@ -340,7 +347,7 @@
                   (local.get $y0)
                   (local.get $w)))
           ;; plotLineHigh(x0, y0, x1, y1)
-          (else (call $module/line_high
+          (else (call $lux/line_high
                   (local.get $r)
                   (local.get $g)
                   (local.get $b)
@@ -351,7 +358,7 @@
                   (local.get $w)))))))
 
   ;; From: https://www.sctheblog.com/blog/hair-software-rasterize/
-  (func $module/line_func
+  (func $lux/line_func
     (param $v0x i32) 
     (param $v0y i32) 
     (param $v1x i32) 
@@ -376,7 +383,7 @@
     (local.get $b)
     (local.get $c))
 
-  (func $module/tri
+  (func $lux/tri
     (param $v00x i32) 
     (param $v00y i32) 
     (param $v01x i32) 
@@ -425,7 +432,7 @@
     (local $rgba i32)
 
     (local.set $rgba 
-      (call $module/rgb2int 
+      (call $lux/rgb2int 
             (local.get $r) 
             (local.get $g)
             (local.get $b)))
@@ -434,45 +441,45 @@
     (local.get $v00x)
     (local.get $v01x)
     (local.get $v10x)
-    (call $module/min32s)
-    (call $module/min32s)
+    (call $lux/min32s)
+    (call $lux/min32s)
     (i32.const 0)
-    (call $module/max32s)
+    (call $lux/max32s)
     (local.set $min_x)
 
     ;; let min_y = max(0, min(v00y, min(v01y, min(v10y, v11y))))
     (local.get $v00y)
     (local.get $v01y)
     (local.get $v10y)
-    (call $module/min32s)
-    (call $module/min32s)
+    (call $lux/min32s)
+    (call $lux/min32s)
     (i32.const 0)
-    (call $module/max32s)
+    (call $lux/max32s)
     (local.set $min_y)
 
     ;; let max_x = min(w, max(v00x, max(v01x, max(v10x, v11x))))
     (local.get $v00x)
     (local.get $v01x)
     (local.get $v10x)
-    (call $module/max32s)
-    (call $module/max32s)
+    (call $lux/max32s)
+    (call $lux/max32s)
     (local.get $w)
-    (call $module/min32s)
+    (call $lux/min32s)
     (local.set $max_x)
 
     ;; let max_y = min(h, max(v00y, max(v01y, max(v10y, v11y))))
     (local.get $v00y)
     (local.get $v01y)
     (local.get $v10y)
-    (call $module/max32s)
-    (call $module/max32s)
+    (call $lux/max32s)
+    (call $lux/max32s)
     (local.get $h)
-    (call $module/min32s)
+    (call $lux/min32s)
     (local.set $max_y)
 
 
     ;; let CC0 = edgeC(v01, v00);
-    (call $module/line_func 
+    (call $lux/line_func 
           (local.get $v00x) (local.get $v00y) 
           (local.get $v01x) (local.get $v01y))
     (local.set $cc0c)
@@ -480,7 +487,7 @@
     (local.set $cc0a)
 
     ;; let CC1 = edgeC(v11, v01);
-    (call $module/line_func 
+    (call $lux/line_func 
           (local.get $v01x) (local.get $v01y) 
           (local.get $v10x) (local.get $v10y))
     (local.set $cc1c)
@@ -488,7 +495,7 @@
     (local.set $cc1a)
 
     ;; let CC2 = edgeC(v10, v11);
-    (call $module/line_func 
+    (call $lux/line_func 
           (local.get $v10x) (local.get $v10y) 
           (local.get $v00x) (local.get $v00y))
     (local.set $cc2c)
@@ -551,7 +558,7 @@
         (i32.gt_s (local.get $cx2) (i32.const 0))
         i32.or i32.or
         (i32.eq (i32.const 0))
-        (if (then (call $module/put_pixel 
+        (if (then (call $lux/put_pixel 
                           (local.get $rgba)
                           (local.get $x)
                           (local.get $y)
@@ -582,7 +589,7 @@
         (then (br $y_loop))))
     )
 
-  (func $module/quad
+  (func $lux/quad
     (param $v00x i32) 
     (param $v00y i32) 
     (param $v01x i32) 
@@ -639,7 +646,7 @@
     (local $rgba i32)
 
     (local.set $rgba 
-      (call $module/rgb2int 
+      (call $lux/rgb2int 
             (local.get $r) 
             (local.get $g)
             (local.get $b)))
@@ -649,11 +656,11 @@
     (local.get $v01x)
     (local.get $v10x)
     (local.get $v11x)
-    (call $module/min32s)
-    (call $module/min32s)
-    (call $module/min32s)
+    (call $lux/min32s)
+    (call $lux/min32s)
+    (call $lux/min32s)
     (i32.const 0)
-    (call $module/max32s)
+    (call $lux/max32s)
     (local.set $min_x)
 
     ;; let min_y = max(0, min(v00y, min(v01y, min(v10y, v11y))))
@@ -661,11 +668,11 @@
     (local.get $v01y)
     (local.get $v10y)
     (local.get $v11y)
-    (call $module/min32s)
-    (call $module/min32s)
-    (call $module/min32s)
+    (call $lux/min32s)
+    (call $lux/min32s)
+    (call $lux/min32s)
     (i32.const 0)
-    (call $module/max32s)
+    (call $lux/max32s)
     (local.set $min_y)
 
     ;; let max_x = min(w, max(v00x, max(v01x, max(v10x, v11x))))
@@ -673,11 +680,11 @@
     (local.get $v01x)
     (local.get $v10x)
     (local.get $v11x)
-    (call $module/max32s)
-    (call $module/max32s)
-    (call $module/max32s)
+    (call $lux/max32s)
+    (call $lux/max32s)
+    (call $lux/max32s)
     (local.get $w)
-    (call $module/min32s)
+    (call $lux/min32s)
     (local.set $max_x)
 
     ;; let max_y = min(h, max(v00y, max(v01y, max(v10y, v11y))))
@@ -685,15 +692,15 @@
     (local.get $v01y)
     (local.get $v10y)
     (local.get $v11y)
-    (call $module/max32s)
-    (call $module/max32s)
-    (call $module/max32s)
+    (call $lux/max32s)
+    (call $lux/max32s)
+    (call $lux/max32s)
     (local.get $h)
-    (call $module/min32s)
+    (call $lux/min32s)
     (local.set $max_y)
 
     ;; let CC0 = edgeC(v01, v00);
-    (call $module/line_func 
+    (call $lux/line_func 
           (local.get $v00x) (local.get $v00y) 
           (local.get $v01x) (local.get $v01y))
     (local.set $cc0c)
@@ -701,7 +708,7 @@
     (local.set $cc0a)
 
     ;; let CC1 = edgeC(v11, v01);
-    (call $module/line_func 
+    (call $lux/line_func 
           (local.get $v01x) (local.get $v01y) 
           (local.get $v10x) (local.get $v10y))
     (local.set $cc1c)
@@ -709,7 +716,7 @@
     (local.set $cc1a)
 
     ;; let CC2 = edgeC(v10, v11);
-    (call $module/line_func 
+    (call $lux/line_func 
           (local.get $v10x) (local.get $v10y) 
           (local.get $v11x) (local.get $v11y))
     (local.set $cc2c)
@@ -717,7 +724,7 @@
     (local.set $cc2a)
 
     ;; let CC3 = edgeC(v00, v10);
-    (call $module/line_func 
+    (call $lux/line_func 
           (local.get $v11x) (local.get $v11y) 
           (local.get $v00x) (local.get $v00y))
     (local.set $cc3c)
@@ -798,7 +805,7 @@
         (i32.gt_s (local.get $cx3) (i32.const 0))
         i32.or i32.or i32.or 
         (i32.eq (i32.const 0))
-        (if (then (call $module/put_pixel 
+        (if (then (call $lux/put_pixel 
                           (local.get $rgba)
                           (local.get $x)
                           (local.get $y)
