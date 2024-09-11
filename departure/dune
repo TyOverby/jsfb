@@ -1,0 +1,12 @@
+(rule
+ (deps build_wat.js departure.json)
+ (targets departure.wat)
+ (mode promote)
+ (action
+  (bash "node ./build_wat.js > ./departure.wat")))
+
+(rule
+ (deps departure.wat)
+ (targets departure.wasm departure.wasm.map)
+ (action
+  (bash "../binaryen/bin/wasm-as departure.wat --enable-simd --enable-multivalue --debuginfo --source-map departure.wasm.map --source-map-url ./departure.wasm.map")))

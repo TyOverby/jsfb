@@ -1,13 +1,19 @@
 (rule
- (deps ./binaryen/bin/wasm-as main.wat)
- (target main.wasm)
+ (deps  ./binaryen/bin/wasm-as ./binaryen/lib/libbinaryen.dylib main.wat)
+ (targets main.wasm main.wasm.map)
  (mode promote)
  (action
-  (bash "%{deps} --enable-simd")))
+  (bash "./binaryen/bin/wasm-as main.wat --enable-simd --enable-multivalue --debuginfo --source-map main.wasm.map --source-map-url ./main.wasm.map")))
 
 (rule
- (deps ./binaryen/bin/wasm-opt main.wasm)
+ (deps ./binaryen/bin/wasm-merge ./binaryen/lib/libbinaryen.dylib  main.wasm ./departure/departure.wasm)
+ (targets main-merged.wasm)
+ (action
+  (bash "./binaryen/bin/wasm-merge main.wasm lux ./departure/departure.wasm departure --enable-simd --enable-multivalue --debuginfo -o main-merged.wasm")))
+
+(rule
+ (deps ./binaryen/bin/wasm-opt ./binaryen/lib/libbinaryen.dylib main-merged.wasm)
  (target main.opt.wasm)
  (mode promote)
  (action
-  (bash "%{deps} --enable-simd -O3 -o %{target}")))
+  (bash "./binaryen/bin/wasm-opt --enable-simd --enable-multivalue -O3 -o %{target}")))

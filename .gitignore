@@ -3,3 +3,5 @@ _build
 binaryen-version_118
 binaryen
 .DS_Store
+*.wasm
+*.wasm.map
