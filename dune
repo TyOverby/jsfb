@@ -1,26 +1,25 @@
 (rule
- (deps  ./binaryen/bin/wasm-as ./binaryen/lib/libbinaryen.dylib main.wat)
+ (deps
+  ./binaryen/bin/wasm-as
+  ; ./binaryen/lib/libbinaryen.dylib 
+  main.wat)
  (targets main.wasm main.wasm.map)
  (mode promote)
  (action
-  (bash "./binaryen/bin/wasm-as main.wat --enable-simd --enable-multivalue --debuginfo --source-map main.wasm.map --source-map-url ./main.wasm.map")))
+  (bash
+   "./binaryen/bin/wasm-as main.wat --enable-simd --enable-multivalue --debuginfo --source-map main.wasm.map --source-map-url ./main.wasm.map")))
 
 (rule
- (deps 
-   ./binaryen/bin/wasm-merge 
-   ./binaryen/lib/libbinaryen.dylib 
-   ./departure/departure.wasm
-   ./walloc/walloc.wasm
-   main.wasm 
-   )
+ (deps
+  ./binaryen/bin/wasm-merge
+  ;./binaryen/lib/libbinaryen.dylib
+  ./departure/departure.wasm
+  ./walloc/walloc.wasm
+  main.wasm)
  (targets main-merged.wasm)
  (action
-  (bash "./binaryen/bin/wasm-merge \
-        main.wasm lux \
-        ./departure/departure.wasm departure \
-        ./walloc/walloc.wasm walloc \
-        --enable-simd --enable-multivalue --debuginfo -n \
-        -o main-merged.wasm")))
+  (bash
+   "./binaryen/bin/wasm-merge main.wasm lux ./departure/departure.wasm departure ./walloc/walloc.wasm walloc --enable-simd --enable-multivalue --debuginfo -n -o main-merged.wasm")))
 
 ;(rule
 ; (deps ./binaryen/bin/wasm-opt ./binaryen/lib/libbinaryen.dylib main-merged.wasm)
@@ -29,9 +28,9 @@
 ; (action
 ;  (bash "./binaryen/bin/wasm-opt ./main-merged.wasm --enable-simd --enable-multivalue -O4 -o %{target}")))
 
- (rule
-  (deps main-merged.wasm)
-  (target main.opt.wasm)
-  (mode promote)
-  (action
-   (bash "cp %{deps} %{target}")))
+(rule
+ (deps main-merged.wasm)
+ (target main.opt.wasm)
+ (mode promote)
+ (action
+  (bash "cp %{deps} %{target}")))
