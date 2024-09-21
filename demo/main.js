@@ -2,6 +2,7 @@ const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext('2d');
 
 const w = 4096, h = 2160;
+let zoom = 1;
 
 observe(canvas);
 
@@ -90,7 +91,7 @@ async function main() {
 
     let b = true;
     function loop() {
-        resizeCanvasToDisplaySize(canvas);
+        resizeCanvasToDisplaySize(canvas, zoom);
 
         ctx.fillStyle = `rgb(255,255,255)`;
         ctx.fillRect(0, 0, w, h);

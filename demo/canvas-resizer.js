@@ -44,21 +44,24 @@ function observe(canvas) {
     }
 }
 
-function resizeCanvasToDisplaySize(canvas) {
+function resizeCanvasToDisplaySize(canvas, zoom) {
     // Get the size the browser is displaying the canvas in device pixels.
     const size = canvasToDisplaySizeMap.get(canvas);
     if (size) {
         const [displayWidth, displayHeight] = size;
 
         // Check if the canvas is not the same size.
-        const needResize = canvas.width != displayWidth ||
-            canvas.height != displayHeight;
+        const needResize =
+            canvas.width != displayWidth
+            || canvas.height != displayHeight
+            || canvas.zoom != zoom;
 
         if (needResize) {
             // Make the canvas the same size
-            canvas.width = displayWidth;
-            canvas.height = displayHeight;
+            canvas.width = displayWidth / zoom;
+            canvas.height = displayHeight / zoom;
         }
+        canvas.zoom = zoom;
 
         return needResize;
     }
