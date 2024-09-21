@@ -6,10 +6,21 @@
   (bash "./binaryen/bin/wasm-as main.wat --enable-simd --enable-multivalue --debuginfo --source-map main.wasm.map --source-map-url ./main.wasm.map")))
 
 (rule
- (deps ./binaryen/bin/wasm-merge ./binaryen/lib/libbinaryen.dylib  main.wasm ./departure/departure.wasm)
+ (deps 
+   ./binaryen/bin/wasm-merge 
+   ./binaryen/lib/libbinaryen.dylib 
+   ./departure/departure.wasm
+   ./walloc/walloc.wasm
+   main.wasm 
+   )
  (targets main-merged.wasm)
  (action
-  (bash "./binaryen/bin/wasm-merge main.wasm lux ./departure/departure.wasm departure --enable-simd --enable-multivalue --debuginfo -o main-merged.wasm")))
+  (bash "./binaryen/bin/wasm-merge \
+        main.wasm lux \
+        ./departure/departure.wasm departure \
+        ./walloc/walloc.wasm walloc \
+        --enable-simd --enable-multivalue --debuginfo -n \
+        -o main-merged.wasm")))
 
 ;(rule
 ; (deps ./binaryen/bin/wasm-opt ./binaryen/lib/libbinaryen.dylib main-merged.wasm)

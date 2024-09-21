@@ -8,31 +8,85 @@ observe(canvas);
 async function main() {
     const module = await WebAssembly.instantiateStreaming(fetch("main.opt.wasm"), {});
     window.module = module;
-    const uint8_array = new Uint8ClampedArray(module.instance.exports.memory.buffer);
+
+    function malloc(n) {
+        let r = module.instance.exports.malloc(n);
+        if (r === 0) { throw new Error("malloc failed!"); }
+        return r;
+    }
+
+    function malloc_dv(n) {
+        let ptr = malloc(n);
+        return [ptr, new DataView(module.instance.exports.memory.buffer, ptr, n)];
+    }
+
+    function free(p) {
+        return module.instance.exports.free(p);
+    }
+
+    const buf_size = (w * h * 4);
+    const buf = module.instance.exports.malloc(buf_size);
+    const uint8_array = new Uint8ClampedArray(module.instance.exports.memory.buffer, buf, buf_size);
     window.uint8 = uint8_array;
     const img_buffer = new ImageData(uint8_array, w, h);
 
-    function fillWasm(r, g, b) {
-        module.instance.exports.fill_simd(r, g, b, w * h);
+    async function load_font () {
+        const letters = await (await fetch("./departure/departure.json")).json();
+        const [table_ptr, table] = malloc_dv((letters.length) * 8 + 4);
+        let table_offset = 0;
+        for (let letter of letters) {
+            const letter_buf_size_bytes = 
+                4 + // code
+                4 + // width
+                4 + // height
+                letter.width * letter.pixels.length;
+            const [ptr, dv] = malloc_dv(letter_buf_size_bytes);
+            dv.setUint32(0,letter.code, true);
+            dv.setUint32(4,letter.width, true);
+            dv.setUint32(8,letter.pixels.length, true);
+            let i = 12;
+            for (let y = 0; y < letter.pixels.length; y++) {
+                for (let x = 0; x < letter.width; x++) {
+                    const is_set = letter.pixels[y][x] === "X";
+                    dv.setUint8(i, is_set ? 1 : 0);
+                    i++;
+                }
+            }
+
+            table.setUint32(table_offset, letter.code, true);
+            table.setUint32(table_offset + 4, ptr, true);
+            table_offset += 8;
+        }
+        return table_ptr;
     }
 
-    function line(r, g, b, x0, y0, x1, y1) {
-        module.instance.exports.line(r, g, b, x0, y0, x1, y1, w);
+    const font = await load_font();
+
+    function fillWasm(buf, r, g, b) {
+        module.instance.exports.fill_simd(buf, r, g, b, w * h);
     }
 
-    function quad(r, g, b, x0, y0, x1, y1, x2, y2, x3, y3) {
-        module.instance.exports.quad(x0, y0, x1, y1, x2, y2, x3, y3, r, g, b, w, h);
+    function line(buf, r, g, b, x0, y0, x1, y1) {
+        module.instance.exports.line(buf, r, g, b, x0, y0, x1, y1, w);
     }
 
-    function tri(r, g, b, x0, y0, x1, y1, x2, y2) {
-        module.instance.exports.tri(x0, y0, x1, y1, x2, y2, r, g, b, w, h);
+    function quad(buf, r, g, b, x0, y0, x1, y1, x2, y2, x3, y3) {
+        module.instance.exports.quad(buf, x0, y0, x1, y1, x2, y2, x3, y3, r, g, b, w, h);
     }
 
-    function departure_a(r, g, b, x, y, size) {
-        module.instance.exports['$departure/a'](r,g,b,x,y,size, w)
+    function tri(buf, r, g, b, x0, y0, x1, y1, x2, y2) {
+        module.instance.exports.tri(buf, x0, y0, x1, y1, x2, y2, r, g, b, w, h);
     }
 
-    fillWasm(10, 50, 10);
+    function departure_a(buf, r, g, b, x, y, size) {
+        module.instance.exports['$departure/a'](buf, r,g,b,x,y,size, w)
+    }
+
+    function char(buf, font, char, r, g, b, x, y) {
+        module.instance.exports.single_char(buf,font,char, r,g,b,x,y,w,h);
+    }
+
+    fillWasm(buf, 10, 50, 10);
 
     let b = true;
     function loop() {
@@ -50,19 +104,18 @@ async function main() {
         b = !b;
 
         // quad
-        quad(250,250,250, 20, 20,   50, 10,   100, 100,   10, 50);
-        quad(250,0,250, 0, 100,   100, 100,   100, 200,   0, 200);
-        quad(0,0,250, 100, 100,   200, 100,   200, 200,   100, 200);
+        quad(buf, 250,250,250, 20, 20,   50, 10,   100, 100,   10, 50);
+        quad(buf, 250,0,250, 0, 100,   100, 100,   100, 200,   0, 200);
+        quad(buf, 0,0,250, 100, 100,   200, 100,   200, 200,   100, 200);
 
         // tri
-        tri(150,150,250,  100, 20,   200, 20,   150, 100);
-
+        tri(buf, 150,150,250,  100, 20,   200, 20,   150, 100);
 
         // star burst
         for (var theta = 0; theta < 2 * Math.PI; theta += (Math.PI / 10)) {
             let cx = 100, cy = 100;
             let dx = cx + 50 * Math.cos(theta), dy = cy + 50 * Math.sin(theta);
-            line(255, 250, 100, cx, cy, dx, dy);
+            line(buf, 255, 250, 100, cx, cy, dx, dy);
         }
 
         // sin wave
@@ -70,22 +123,25 @@ async function main() {
         var prev_y = 200 + 50 * Math.cos(10);
         for (var x = 100; x < 300; x ++) {
             var y = 200 + (50 * Math.cos(x / 10));
-            line(255, 250, 100, prev_x, prev_y, x, y);
+            line(buf, 255, 250, 100, prev_x, prev_y, x, y);
             prev_x = x;
             prev_y = y;
         }
         // departure a
-        quad(255,255,255, 0, 250,   250, 250,   250, 500,   0, 500);
+        quad(buf, 255,255,255, 0, 250,   250, 250,   250, 500,   0, 500);
         let offset = 20;
+        let i = 0;
         for (var size = 0; size < 10; size++) {
-            departure_a(0,0,0, offset, 275, size);
+            departure_a(buf, 0,0,0, offset, 275, size);
             offset += (size * 7);
+            char(buf, font, 97 + i, 0,0,0, offset, 300);
+            i++;
         }
 
         ctx.putImageData(img_buffer, 0, 0, 0,0, 500, 500);
         let after = performance.now();
         let delta = after - before;
-        console.log(delta);
+        //console.log(delta);
 
         setTimeout(loop, 1000);
         //window.requestAnimationFrame(loop);

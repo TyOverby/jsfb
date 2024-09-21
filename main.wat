@@ -9,6 +9,7 @@
   (export "line" (func $lux/line))
   (export "quad" (func $lux/quad))
   (export "tri" (func $lux/tri))
+  (export "single_char" (func $lux/single_char))
   (export "memory" (memory $0))
 
   ;; Combine rgb byte components into a single i32 for the pixel
@@ -25,13 +26,15 @@
     (local.get $rgba))
 
   (func $lux/put_pixel_raw
+      (param $buf i32) 
       (param $offset i32) 
       (param $rgba i32) 
     (i32.store 
-      (i32.mul (local.get $offset) (i32.const 4)) 
+      (i32.add (local.get $buf) (i32.mul (local.get $offset) (i32.const 4)))
       (local.get $rgba)))
 
   (func $lux/put_pixel
+      (param $buf i32)
       (param $rgba i32) 
       (param $x i32) 
       (param $y i32) 
@@ -42,9 +45,10 @@
       (i32.add 
         (i32.mul (local.get $w) (local.get $y))
         (local.get $x)))
-    (call $lux/put_pixel_raw (local.get $offset) (local.get $rgba)))
+    (call $lux/put_pixel_raw (local.get $buf) (local.get $offset) (local.get $rgba)))
 
   (func $lux/fill 
+        (param $buf i32)
         (param $r i32) 
         (param $g i32) 
         (param $b i32) 
@@ -61,8 +65,8 @@
     ;; Loop through pixels and write rgba into every memory cell
     (loop $loop 
         (i32.store 
-            (i32.mul (i32.const 4) (local.get $i)) 
-            (local.get $rgba))
+          (i32.add (local.get $buf) (i32.mul (i32.const 4) (local.get $i)))
+          (local.get $rgba))
         (local.set $i (i32.add (local.get $i) (i32.const 1)))
         (br_if $loop (i32.ne (local.get $i) (local.get $pixels)))))
 
@@ -70,6 +74,7 @@
   ;; and then uses bulk-memory copy operators to fill the rest of 
   ;; the lines
   (func $lux/fill_simd 
+        (param $buf i32)
         (param $r i32) 
         (param $g i32) 
         (param $b i32) 
@@ -92,13 +97,14 @@
     ;; Loop through pixels and write rgbai28 into every memory cell
     (loop $loop 
         (v128.store align=4 
-            (i32.mul (i32.const 16) (local.get $i)) 
+            (i32.add (local.get $buf) (i32.mul (i32.const 16) (local.get $i)))
             (local.get $rgba128))
         (local.set $i (i32.add (local.get $i) (i32.const 1)))
         (br_if $loop (i32.ne (local.get $i) (local.get $pixels)))))
 
 
   (func $lux/line_low
+    (param $buf i32)
     (param $r i32) 
     (param $g i32) 
     (param $b i32) 
@@ -155,6 +161,7 @@
     (loop $loop 
         ;; plot(x, y)
         (call $lux/put_pixel 
+          (local.get $buf)
           (local.get $rgba)
           (local.get $x)
           (local.get $y)
@@ -185,6 +192,7 @@
        (br_if $loop (local.get $stop))))
 
   (func $lux/line_high
+    (param $buf i32) 
     (param $r i32) 
     (param $g i32) 
     (param $b i32) 
@@ -241,6 +249,7 @@
     (loop $loop 
         ;; plot(x, y)
         (call $lux/put_pixel 
+          (local.get $buf)
           (local.get $rgba)
           (local.get $x)
           (local.get $y)
@@ -296,6 +305,7 @@
   ;; TODO: horizontal and vertical line specialization
 
   (func $lux/line
+    (param $buf i32)
     (param $r i32) 
     (param $g i32) 
     (param $b i32) 
@@ -315,6 +325,7 @@
         (if (i32.ge_u (local.get $x0) (local.get $x1))
           ;; plotLineLow(x1, y1, x0, y0)
           (then (call $lux/line_low 
+                  (local.get $buf)
                   (local.get $r)
                   (local.get $g)
                   (local.get $b)
@@ -325,6 +336,7 @@
                   (local.get $w)))
           ;; plotLineLow(x0, y0, x1, y1)
           (else (call $lux/line_low 
+                  (local.get $buf)
                   (local.get $r)
                   (local.get $g)
                   (local.get $b)
@@ -338,6 +350,7 @@
         (if (i32.ge_u (local.get $y0) (local.get $y1))
           ;; plotLineHigh(x1, y1, x0, y0)
           (then (call $lux/line_high
+                  (local.get $buf)
                   (local.get $r)
                   (local.get $g)
                   (local.get $b)
@@ -348,6 +361,7 @@
                   (local.get $w)))
           ;; plotLineHigh(x0, y0, x1, y1)
           (else (call $lux/line_high
+                  (local.get $buf)
                   (local.get $r)
                   (local.get $g)
                   (local.get $b)
@@ -384,6 +398,7 @@
     (local.get $c))
 
   (func $lux/tri
+    (param $buf i32) 
     (param $v00x i32) 
     (param $v00y i32) 
     (param $v01x i32) 
@@ -559,6 +574,7 @@
         i32.or i32.or
         (i32.eq (i32.const 0))
         (if (then (call $lux/put_pixel 
+                          (local.get $buf)
                           (local.get $rgba)
                           (local.get $x)
                           (local.get $y)
@@ -590,6 +606,7 @@
     )
 
   (func $lux/quad
+    (param $buf i32) 
     (param $v00x i32) 
     (param $v00y i32) 
     (param $v01x i32) 
@@ -806,6 +823,7 @@
         i32.or i32.or i32.or 
         (i32.eq (i32.const 0))
         (if (then (call $lux/put_pixel 
+                          (local.get $buf)
                           (local.get $rgba)
                           (local.get $x)
                           (local.get $y)
@@ -839,5 +857,131 @@
       (if (i32.lt_u (local.get $y) (local.get $max_y))
         (then (br $y_loop))))
     )
+
+  (func $lux/char_impl
+    (param $buf i32) 
+    (param $char_data i32) 
+    (param $rgba i32) 
+    (param $x i32) 
+    (param $y i32) 
+    (param $w i32) 
+    (param $h i32)
+    (result i32)
+
+    (local $i i32)
+    (local $k i32)
+
+    (local $char_width i32)
+    (local $char_height i32)
+    (local $font_px_offset i32)
+    (local $offset_y i32)
+    (local $offset_x i32)
+
+    (local.set $char_width (i32.load (i32.add (i32.const 4) (local.get $char_data))))
+    (local.set $char_height (i32.load (i32.add (i32.const 8) (local.get $char_data))))
+    (local.set $char_data (i32.add (local.get $char_data) (i32.const 12)))
+
+    (local.set $offset_y
+      (i32.add 
+        (i32.mul (local.get $w) (local.get $y))
+        (local.get $x)))
+
+    (loop $y_loop
+      (if (i32.eq (local.get $i) (local.get $char_height))
+        (then nop)
+        (else 
+          (local.set $k (i32.const 0))
+          (local.set $offset_x (local.get $offset_y))
+
+          (loop $x_loop
+            (if (i32.eq (local.get $k) (local.get $char_width))
+              (then nop)
+              (else 
+                (if (i32.load8_u (local.get $char_data)) 
+                  (then 
+                    (call $lux/put_pixel_raw
+                      (local.get $buf)
+                      (local.get $offset_x)
+                      (local.get $rgba))))
+
+                (local.set $offset_x (i32.add (local.get $offset_x) (i32.const 1)))
+                (local.set $char_data (i32.add (local.get $char_data) (i32.const 1)))
+                (local.set $k (i32.add (local.get $k) (i32.const 1)))
+                (br $x_loop)
+            )))
+
+          (local.set $offset_y (i32.add (local.get $offset_y) (local.get $w)))
+          (local.set $i (i32.add (local.get $i) (i32.const 1)))
+          (br $y_loop)
+      )))
+      
+      (local.get $char_width))
+
+  (func $lux/char
+    (param $buf i32) 
+    (param $font_table i32) 
+    (param $char i32) 
+    (param $rgba i32) 
+    (param $x i32) 
+    (param $y i32) 
+    (param $w i32) 
+    (param $h i32) 
+    (result i32)
+
+    
+    (local $i i32)
+    (local $count i32)
+    (local $current_code i32)
+    (local $result_width i32)
+
+    (local.set $count (i32.load (local.get $font_table)))
+    (local.set $font_table (i32.add (local.get $font_table) (i32.const 8)))
+    (local.set $i (i32.const 0))
+
+
+    (loop $loop
+      (local.set $current_code 
+        (i32.load (local.get $font_table)))
+
+      (if (i32.eq (local.get $current_code) (local.get $char)) 
+        (then 
+          (local.set $result_width 
+            (call $lux/char_impl 
+                (local.get $buf)
+                (i32.load (i32.add (i32.const 4) (local.get $font_table)))
+                (local.get $rgba)
+                (local.get $x)
+                (local.get $y)
+                (local.get $w)
+                (local.get $h))))
+            (else 
+       (if (i32.eq (local.get $current_code) (i32.const 0)) 
+        (then nop)
+        (else
+          (local.set $font_table (i32.add (local.get $font_table) (i32.const 8)))
+          (br $loop))))))
+    (local.get $result_width))
+
+  (func $lux/single_char
+    (param $buf i32) 
+    (param $font_table i32) 
+    (param $char i32) 
+    (param $r i32) 
+    (param $g i32) 
+    (param $b i32) 
+    (param $x i32) 
+    (param $y i32) 
+    (param $w i32) 
+    (param $h i32) 
+    (result i32)
+    
+    (call $lux/char 
+      (local.get $buf)
+      (local.get $font_table)
+      (local.get $char)
+      (call $lux/rgb2int (local.get $r) (local.get $g) (local.get $b))
+      (local.get $x)
+      (local.get $y)
+      (local.get $w)
+      (local.get $h)))
 )
-;; .
