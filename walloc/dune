@@ -10,4 +10,4 @@
  (target walloc.wasm)
  (mode promote)
  (action
-  (bash "PATH=\"/opt/homebrew/opt/llvm/bin:$PATH\" wasm-ld %{deps} --export=malloc --export=free --no-entry --import-memory=lux,memory -o %{target}")))
+  (bash "PATH=\"/opt/homebrew/opt/llvm/bin:$PATH\" wasm-ld %{deps} --export=malloc --export=free --no-entry --export-memory -o %{target}")))
