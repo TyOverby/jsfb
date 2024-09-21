@@ -1,6 +1,7 @@
 (module
   (type $0 (func (param i32 i32) (result i32)))
-  (memory $0 540)
+  (import "runtime" "memory" (memory $0 0))
+  ;; (memory $0 540)
   (export "put_pixel_raw" (func $lux/put_pixel_raw))
   (export "rgb2int" (func $lux/rgb2int))
 
@@ -10,7 +11,6 @@
   (export "quad" (func $lux/quad))
   (export "tri" (func $lux/tri))
   (export "single_char" (func $lux/single_char))
-  (export "memory" (memory $0))
 
   ;; Combine rgb byte components into a single i32 for the pixel
   (func $lux/rgb2int

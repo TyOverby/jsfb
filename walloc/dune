@@ -9,14 +9,12 @@
 ;  (target walloc.wasm)
 ;  (mode promote)
 ;  (action
-;   (bash "PATH=\"/opt/homebrew/opt/llvm/bin:$PATH\" wasm-ld %{deps} --export=malloc --export=free --no-entry --import-memory=lux,memory -o %{target}")))
+;   (bash "PATH=\"/opt/homebrew/opt/llvm/bin:$PATH\" wasm-ld %{deps} --export=malloc --export=free --no-entry --export-memory -o %{target}")))
 
 (rule
  (deps
-  ../binaryen/bin/wasm-as
-  ; ./binaryen/lib/libbinaryen.dylib 
+  (source_tree ../binaryen)
   walloc.wat)
  (targets walloc.wasm)
- (mode promote)
  (action
-  (bash "../binaryen/bin/wasm-as walloc.wat -o walloc.wasm")))
+  (run ../binaryen/bin/wasm-as walloc.wat -o walloc.wasm)))

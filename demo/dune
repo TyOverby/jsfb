@@ -1,0 +1,6 @@
+(rule
+ (deps ../src/lux.wasm ../walloc/walloc.wasm ../departure/departure.json)
+ (targets lux.wasm walloc.wasm departure.json)
+ (mode promote)
+ (action
+  (bash "cp %{deps} ./")))

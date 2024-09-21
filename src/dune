@@ -1,0 +1,16 @@
+(rule
+ (deps
+  (source_tree ../binaryen)
+  lux.wat)
+ (targets lux.wasm lux.wasm.map)
+ (action
+  (run
+   ../binaryen/bin/wasm-as
+   lux.wat
+   --enable-simd
+   --enable-multivalue
+   --debuginfo
+   --source-map
+   lux.wasm.map
+   --source-map-url
+   ./lux.wasm.map)))
