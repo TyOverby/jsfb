@@ -1,13 +1,22 @@
-; echo 'export PATH="/opt/homebrew/opt/llvm/bin:$PATH"' >> ~/.zshrc
-(rule
- (deps walloc.c)
- (target walloc.o)
- (action
-  (bash "PATH=\"/opt/homebrew/opt/llvm/bin:$PATH\" clang %{deps} -DNDEBUG -Oz --target=wasm32 -nostdlib -c -o %{target}")))
+; (rule
+;  (deps walloc.c)
+;  (target walloc.o)
+;  (action
+;   (bash "PATH=\"/opt/homebrew/opt/llvm/bin:$PATH\" clang %{deps} -DNDEBUG -Oz --target=wasm32 -nostdlib -c -o %{target}")))
+; 
+; (rule
+;  (deps walloc.o)
+;  (target walloc.wasm)
+;  (mode promote)
+;  (action
+;   (bash "PATH=\"/opt/homebrew/opt/llvm/bin:$PATH\" wasm-ld %{deps} --export=malloc --export=free --no-entry --import-memory=lux,memory -o %{target}")))
 
 (rule
- (deps walloc.o)
- (target walloc.wasm)
+ (deps
+  ../binaryen/bin/wasm-as
+  ; ./binaryen/lib/libbinaryen.dylib 
+  walloc.wat)
+ (targets walloc.wasm)
  (mode promote)
  (action
-  (bash "PATH=\"/opt/homebrew/opt/llvm/bin:$PATH\" wasm-ld %{deps} --export=malloc --export=free --no-entry --import-memory=lux,memory -o %{target}")))
+  (bash "../binaryen/bin/wasm-as walloc.wat -o walloc.wasm")))
