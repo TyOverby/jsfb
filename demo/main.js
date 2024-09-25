@@ -130,10 +130,8 @@ async function main() {
         }
 
         quad(buf, 255, 255, 255, 0, 250, 250, 250, 250, 500, 0, 500);
-        let offset = 20;
         for (let i = 0; i < 26; i++) {
-            offset += 8;
-            char(buf, font, 97 + i, 0, 0, 0, offset, 300);
+            char(buf, font, 97 + i, 0, 0, 0, 4 + (i * 8), 300);
         }
 
         const uint8_array = new Uint8ClampedArray(walloc.instance.exports.memory.buffer, buf, buf_size);

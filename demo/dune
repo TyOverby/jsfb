@@ -3,4 +3,7 @@
  (targets lux.wasm walloc.wasm departure.json)
  (mode promote)
  (action
-  (bash "cp %{deps} ./")))
+  (progn
+   (copy ../src/lux.wasm lux.wasm)
+   (copy ../walloc/walloc.wasm walloc.wasm)
+   (copy ../departure/departure.json departure.json))))

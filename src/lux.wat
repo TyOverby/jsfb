@@ -930,12 +930,10 @@
 
     
     (local $i i32)
-    (local $count i32)
     (local $current_code i32)
     (local $result_width i32)
 
-    (local.set $count (i32.load (local.get $font_table)))
-    (local.set $font_table (i32.add (local.get $font_table) (i32.const 8)))
+    ;;(local.set $font_table (i32.add (local.get $font_table) (i32.const 8)))
     (local.set $i (i32.const 0))
 
 
