@@ -15,6 +15,7 @@
   - [ ] store width/height in image buffer
 - [ ] Line
   - [ ] implement bounds checking
+  - [ ] separate versions for bounds checks vs no bounds checks?
 - [ ] Fonts
   - [ ] implement "draw_text" function
   - [ ] implement bounds checking
