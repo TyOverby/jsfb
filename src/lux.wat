@@ -10,6 +10,7 @@
   (export "line" (func $lux/line))
   (export "quad" (func $lux/quad))
   (export "tri" (func $lux/tri))
+  (export "many_triangles" (func $lux/many_triangles))
   (export "single_char" (func $lux/single_char))
 
   ;; Combine rgb byte components into a single i32 for the pixel
@@ -602,8 +603,55 @@
       ;; loop trailer
       (local.set $y (i32.add (i32.const 1) (local.get $y)))
       (if (i32.lt_u (local.get $y) (local.get $max_y))
-        (then (br $y_loop))))
-    )
+        (then (br $y_loop)))))
+
+  (func $lux/many_triangles
+    (param $buf i32)
+    (param $count i32)
+    (param $ptr i32)
+    (param $w i32)
+    (param $h i32)
+
+    (local $i i32)
+    (local $rgba i32)
+
+    (local $p1x i32)
+    (local $p1y i32)
+
+    (local $p2x i32)
+    (local $p2y i32)
+
+    (local $p3x i32)
+    (local $p3y i32)
+
+    (local.set $i (i32.const 0))
+
+    (block $leave_loop
+      (loop $continue_loop
+        (if (i32.eq (local.get $i) (local.get $count))
+           (then (br $leave_loop)))
+        
+        (local.set $rgba (i32.load (i32.add (local.get $ptr) (i32.const 0xffffffff))))
+
+        (local.set $p1x (i32.load (i32.add (local.get $ptr) (i32.const 4))))
+        (local.set $p1y (i32.load (i32.add (local.get $ptr) (i32.const 8))))
+
+        (local.set $p2x (i32.load (i32.add (local.get $ptr) (i32.const 12))))
+        (local.set $p2y (i32.load (i32.add (local.get $ptr) (i32.const 16))))
+
+        (local.set $p3x (i32.load (i32.add (local.get $ptr) (i32.const 20))))
+        (local.set $p3y (i32.load (i32.add (local.get $ptr) (i32.const 24))))
+
+        (call $lux/tri (local.get $buf)
+              (local.get $p1x) (local.get $p1y) 
+              (local.get $p2x) (local.get $p2y) 
+              (local.get $p3x) (local.get $p3y)
+              (i32.const 255) (i32.const 0) (i32.const 0) 
+              (local.get $w) (local.get $h))
+        
+        (local.set $i (i32.add (local.get $i) (i32.const 1)))
+        (local.set $ptr (i32.add (local.get $ptr) (i32.const 28)))
+        (br $continue_loop))))
 
   (func $lux/quad
     (param $buf i32) 

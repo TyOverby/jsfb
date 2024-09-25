@@ -83,15 +83,63 @@ async function main() {
         module.instance.exports.tri(buf, x0, y0, x1, y1, x2, y2, r, g, b, w, h);
     }
 
+    function many_triangles(buf, count, ptr) {
+        module.instance.exports.many_triangles(buf, count, ptr, w, h);
+    }
+
     function char(buf, font, char, r, g, b, x, y) {
         module.instance.exports.single_char(buf, font, char, r, g, b, x, y, w, h);
     }
 
-    fillWasm(buf, 10, 50, 10);
+    function eq_tri_pts(buf, cx, cy, rad, angle) {
+        const a1 = angle;
+        const a2 = 2 * Math.PI / 3 + angle;
+        const a3 = 4 * Math.PI / 3 + angle;
+
+        let p1x = Math.floor(cx + rad * Math.cos(a1));
+        let p1y = Math.floor(cy + rad * Math.sin(a1));
+
+        let p2x = Math.floor(cx + rad * Math.cos(a2));
+        let p2y = Math.floor(cy + rad * Math.sin(a2));
+
+        let p3x = Math.floor(cx + rad * Math.cos(a3));
+        let p3y = Math.floor(cy + rad * Math.sin(a3));
+
+        return [p1x, p1y, p2x, p2y, p3x, p3y];
+    }
+
+    function eq_tri(buf, r, g, b, cx, cy, rad, angle) {
+        const a1 = angle;
+        const a2 = 2 * Math.PI / 3 + angle;
+        const a3 = 4 * Math.PI / 3 + angle;
+
+        let p1x = Math.floor(cx + rad * Math.cos(a1));
+        let p1y = Math.floor(cy + rad * Math.sin(a1));
+
+        let p2x = Math.floor(cx + rad * Math.cos(a2));
+        let p2y = Math.floor(cy + rad * Math.sin(a2));
+
+        let p3x = Math.floor(cx + rad * Math.cos(a3));
+        let p3y = Math.floor(cy + rad * Math.sin(a3));
+
+        tri(buf, r, g, b, p1x, p1y, p2x, p2y, p3x, p3y);
+    }
+
+    // many triangles_dv
+    let count = 0;
+    for (let x = 100; x < w - 100; x+= 50) {
+        for (let y = 100; y < h - 100; y+= 50) {
+            count++
+        }
+    }
+
+    let [tri_ptr, tri_buf] = malloc_dv(count * (4 * 4 + 4 * 2 * 3));
 
     let b = true;
     function loop() {
         resizeCanvasToDisplaySize(canvas, zoom);
+
+        fillWasm(buf, 10, 50, 10);
 
         ctx.fillStyle = `rgb(255,255,255)`;
         ctx.fillRect(0, 0, w, h);
@@ -103,6 +151,50 @@ async function main() {
             //fillWasm(10, 10, 50);
         }
         b = !b;
+
+
+        // many triangles
+        /*
+        let r = 0;
+        for (let x = 75; x < w - 75; x+= 50) {
+            let b = 0;
+            for (let y = 75; y < h - 75; y+= 50) {
+                eq_tri(buf, r, 0, b, x, y, 20, performance.now() / 1000);
+                b += 20;
+                b %= 255;
+            }
+            r += 20;
+            r %= 255;
+        }*/
+
+        let i = 0;
+        r = 0;
+        for (let x = 100; x < w - 100; x+= 50) {
+            let b = 0;
+            for (let y = 100; y < h - 100; y+= 50) {
+                let pts = eq_tri_pts(buf, x, y, 20, performance.now() / 1000); 
+                let [p1x, p1y, p2x, p2y, p3x, p3y] = pts;
+                tri_buf.setUint32(i + 0, 0, true);
+
+                tri_buf.setUint32(i + 4, p1x, true);
+                tri_buf.setUint32(i + 8, p1y, true);
+
+                tri_buf.setUint32(i + 12, p2x, true);
+                tri_buf.setUint32(i + 16, p2y, true);
+
+                tri_buf.setUint32(i + 20, p3x, true);
+                tri_buf.setUint32(i + 24, p3y, true);
+
+                b += 20;
+                b %= 255;
+                i += 28;
+            }
+            r += 20;
+            r %= 255;
+        }
+
+        many_triangles(buf, count, tri_ptr);
+
 
         // quad
         quad(buf, 250, 250, 250, 20, 20, 50, 10, 100, 100, 10, 50);
@@ -129,6 +221,7 @@ async function main() {
             prev_y = y;
         }
 
+        // alphabet
         quad(buf, 255, 255, 255, 0, 250, 250, 250, 250, 500, 0, 500);
         for (let i = 0; i < 26; i++) {
             char(buf, font, 97 + i, 0, 0, 0, 4 + (i * 8), 300);
@@ -144,8 +237,8 @@ async function main() {
         let delta = after - before;
         //console.log(delta);
 
-        setTimeout(loop, 1000);
-        //window.requestAnimationFrame(loop);
+        //setTimeout(loop, 1000);
+        window.requestAnimationFrame(loop);
     }
 
     window.requestAnimationFrame(loop);

@@ -2,7 +2,7 @@
  (deps
   (source_tree ../binaryen)
   lux.wat)
- (targets lux.wasm lux.wasm.map)
+ (target lux.raw.wasm)
  (action
   (run
    ../binaryen/bin/wasm-as
@@ -13,4 +13,17 @@
    --source-map
    lux.wasm.map
    --source-map-url
-   ./lux.wasm.map)))
+   ./lux.wasm.map
+   -o %{target})))
+
+(rule
+ (deps  (source_tree ../binaryen) lux.raw.wasm)
+ (target lux.wasm)
+ (action
+  (bash "../binaryen/bin/wasm-opt ./lux.raw.wasm --enable-simd --enable-multivalue -O4 -o %{target}")))
+
+;(rule
+; (deps  lux.raw.wasm)
+; (target lux.wasm)
+; (action
+;  (copy lux.raw.wasm lux.wasm)))
