@@ -12,6 +12,7 @@
   (export "tri" (func $lux/tri))
   (export "many_triangles" (func $lux/many_triangles))
   (export "single_char" (func $lux/single_char))
+  (export "string" (func $lux/string))
 
   ;; Combine rgb byte components into a single i32 for the pixel
   (func $lux/rgb2int
@@ -631,7 +632,7 @@
         (if (i32.eq (local.get $i) (local.get $count))
            (then (br $leave_loop)))
         
-        (local.set $rgba (i32.load (i32.add (local.get $ptr) (i32.const 0xffffffff))))
+        (local.set $rgba (i32.load (i32.add (local.get $ptr) (i32.const 0))))
 
         (local.set $p1x (i32.load (i32.add (local.get $ptr) (i32.const 4))))
         (local.set $p1y (i32.load (i32.add (local.get $ptr) (i32.const 8))))
@@ -1030,4 +1031,49 @@
       (local.get $y)
       (local.get $w)
       (local.get $h)))
+
+  (func $lux/string
+    (param $buf i32) 
+    (param $font_table i32) 
+    (param $str_ptr i32) 
+    (param $r i32) 
+    (param $g i32) 
+    (param $b i32) 
+    (param $x i32) 
+    (param $y i32) 
+    (param $w i32) 
+    (param $h i32) 
+
+    (local $char i32)
+    (local $rgba i32)
+    (local $char_width i32)
+
+    (local.set $rgba 
+      (call $lux/rgb2int (local.get $r) (local.get $g) (local.get $b)))
+
+    (block $leave_loop
+      (if (i32.eq (i32.const 0) (local.get $str_ptr))
+        (then (br $leave_loop)))
+
+      (loop $loop 
+        (local.set $char (i32.load16_u (local.get $str_ptr)))
+        (if (i32.eq (local.get $char) (i32.const 0))
+            (then (br $leave_loop)))
+
+        (local.set $char_width 
+          (call $lux/char 
+            (local.get $buf)
+            (local.get $font_table)
+            (local.get $char)
+            (local.get $rgba)
+            (local.get $x)
+            (local.get $y)
+            (local.get $w)
+            (local.get $h)))
+
+        (local.set $x (i32.add (local.get $x) (local.get $char_width)))
+
+        (local.set $str_ptr (i32.add (i32.const 1) (local.get $str_ptr)))
+        (br $loop)
+        )))
 )

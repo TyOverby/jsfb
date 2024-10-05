@@ -2,7 +2,7 @@ const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext('2d');
 
 const w = 4096, h = 2160;
-let zoom = 1;
+let zoom = 3;
 
 observe(canvas);
 
@@ -37,6 +37,13 @@ async function main() {
 
     async function load_font() {
         const letters = await (await fetch("./departure.json")).json();
+        // hack 
+        letters.push({
+          char: " ",
+          code: 32,
+          pixels: ["       "],
+          width: 7,
+        });
         const [table_ptr, table] = malloc_dv((letters.length) * 8 + 4);
         let table_offset = 0;
         for (let letter of letters) {
@@ -89,6 +96,10 @@ async function main() {
 
     function char(buf, font, char, r, g, b, x, y) {
         module.instance.exports.single_char(buf, font, char, r, g, b, x, y, w, h);
+    }
+
+    function string(buf, font, string, r, g, b, x, y) {
+        module.instance.exports.string(buf, font, string, r, g, b, x, y, w, h);
     }
 
     function eq_tri_pts(buf, cx, cy, rad, angle) {
@@ -221,11 +232,24 @@ async function main() {
             prev_y = y;
         }
 
-        // alphabet
+        // white rectangle for drawing text to
         quad(buf, 255, 255, 255, 0, 250, 250, 250, 250, 500, 0, 500);
+
+        // alphabet
         for (let i = 0; i < 26; i++) {
             char(buf, font, 97 + i, 0, 0, 0, 4 + (i * 8), 300);
         }
+
+        // string
+        const s = "hello world"
+        const [string_ptr, string_dv] = malloc_dv((s.length + 1) * 2);
+        string_dv.setUint16(s.length, 0, true);
+        for (let i = 0; i < s.length; i++) {
+            string_dv.setUint16(i * 2, s.charCodeAt(i), true);
+        }
+        string(buf, font, string_ptr, 0,0,0, 4, 400);
+        free(string_ptr);
+
 
         const uint8_array = new Uint8ClampedArray(walloc.instance.exports.memory.buffer, buf, buf_size);
         window.uint8 = uint8_array;
@@ -237,11 +261,10 @@ async function main() {
         let delta = after - before;
         //console.log(delta);
 
-        //setTimeout(loop, 1000);
-        window.requestAnimationFrame(loop);
+        setTimeout(loop, 1000);
+        //window.requestAnimationFrame(loop);
     }
 
     window.requestAnimationFrame(loop);
 }
-
 main()
