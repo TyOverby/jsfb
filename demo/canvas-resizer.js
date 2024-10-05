@@ -52,14 +52,14 @@ function resizeCanvasToDisplaySize(canvas, zoom) {
 
         // Check if the canvas is not the same size.
         const needResize =
-            canvas.width != displayWidth
-            || canvas.height != displayHeight
+            canvas.width != Math.floor(displayWidth / zoom)
+            || canvas.height != Math.floor(displayHeight / zoom)
             || canvas.zoom != zoom;
 
         if (needResize) {
             // Make the canvas the same size
-            canvas.width = displayWidth / zoom;
-            canvas.height = displayHeight / zoom;
+            canvas.width = Math.floor(displayWidth / zoom);
+            canvas.height = Math.floor(displayHeight / zoom);
         }
         canvas.zoom = zoom;
 

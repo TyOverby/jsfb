@@ -49,7 +49,7 @@
         (local.get $x)))
     (call $lux/put_pixel_raw (local.get $buf) (local.get $offset) (local.get $rgba)))
 
-  (func $lux/fill 
+  (func $lux/fill_one_at_a_time
         (param $buf i32)
         (param $r i32) 
         (param $g i32) 
@@ -85,6 +85,8 @@
     (local $rgba128 v128)
     (local $i i32)
 
+    ;; TODO: handle case where pixels isn't a multiple of 4
+
     (local.set $pixels (i32.div_u (local.get $pixels) (i32.const 4)))
 
     (local.set $rgba 
@@ -103,6 +105,55 @@
             (local.get $rgba128))
         (local.set $i (i32.add (local.get $i) (i32.const 1)))
         (br_if $loop (i32.ne (local.get $i) (local.get $pixels)))))
+
+  ;; this approach appears to perform worse than the regular 
+  ;; simd version
+  (func $lux/fill
+        (param $buf i32)
+        (param $r i32) 
+        (param $g i32) 
+        (param $b i32) 
+        (param $pixels i32) 
+    (local $sixteenths i32)
+    (local $cursor i32)
+    (local $cursor_advance i32)
+    (local $i i32)
+    (local.set $i (i32.const 0))
+
+    ;; 1/16
+    ;; 1/8
+    ;; 1/4
+    ;; 1/2
+    ;; 1
+    (local.set $sixteenths (i32.shr_u (local.get $pixels) (i32.const 1)))
+
+    (if (i32.lt_u (local.get $sixteenths) (i32.const 1024))
+      (then (call $lux/fill_simd 
+                  (local.get $buf)
+                  (local.get $r)
+                  (local.get $g)
+                  (local.get $b)
+                  (local.get $pixels)))
+      (else 
+        (local.set $cursor_advance (i32.mul (local.get $sixteenths) (i32.const 4)))
+        (local.set $cursor (i32.add (local.get $buf) (local.get $cursor_advance)))
+        (call $lux/fill_simd 
+              (local.get $buf)
+              (local.get $r)
+              (local.get $g)
+              (local.get $b)
+              (local.get $sixteenths))
+        (block $break_loop
+          (loop $loop 
+            (if (i32.eq (local.get $i) (i32.const 1))
+                (then (br $break_loop)))
+
+            (memory.copy (local.get $cursor) (local.get $buf) (local.get $cursor_advance))
+            (local.set $cursor (i32.add (local.get $cursor) (local.get $cursor_advance)))
+            (local.set $cursor_advance (i32.shl (local.get $cursor_advance) (i32.const 1)))
+            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+            (br $loop))))))
+
 
 
   (func $lux/line_low
@@ -538,6 +589,14 @@
     ;; color 
     (local $rgba i32)
 
+
+    ;; color writing
+    (local $cursor_y i32)
+    (local $cursor i32)
+    (local $w_4 i32)
+
+    (local.set $w_4 (i32.mul (i32.const 4) (local.get $w)))
+
     (local.set $rgba 
       (call $lux/rgb2int 
             (local.get $r) 
@@ -646,7 +705,17 @@
     (local.set $cy2)
 
     ;; for (var y: f32 = boundRectMin.y; y < boundRectMax.y; y += 1.0) {
+    (local.set $x (local.get $min_x))
     (local.set $y (local.get $min_y))
+
+    ;; setting up pixel locations
+    (i32.mul (local.get $w) (local.get $y))
+    (i32.add (local.get $x))
+    (i32.mul (i32.const 4))
+    (i32.add (local.get $buf))
+    (local.set $cursor_y)
+    (local.set $cursor (local.get $cursor_y))
+
     (loop $y_loop
       ;; var CX0 = CY0;
       (local.set $cx0 (local.get $cy0))
@@ -657,6 +726,7 @@
 
       ;; for (var x: f32 = boundRectMin.x; x < boundRectMax.x; x += 1.0) {
       (local.set $x (local.get $min_x))
+      (local.set $cursor (local.get $cursor_y))
       (loop $x_loop
         ;; if (CX0 >= 0 || CX1 >= 0 || CX2 >= 0 || CX3 >= 0) {
         ;; NOTE: ^ I've inverted this check to match my intuition
@@ -665,12 +735,16 @@
         (i32.gt_s (local.get $cx2) (i32.const 0))
         i32.or i32.or
         (i32.eq (i32.const 0))
-        (if (then (call $lux/put_pixel 
-                          (local.get $buf)
-                          (local.get $rgba)
-                          (local.get $x)
-                          (local.get $y)
-                          (local.get $w))))
+        (if (then 
+              (i32.store (local.get $cursor)
+                         (local.get $rgba))))
+              
+              ;; (call $lux/put_pixel 
+              ;;             (local.get $buf)
+              ;;             (local.get $rgba)
+              ;;             (local.get $x)
+              ;;             (local.get $y)
+              ;;             (local.get $w))))
 
         ;; CX0 += CC0.A;
         (local.set $cx0 (i32.add (local.get $cx0) (local.get $cc0a)))
@@ -681,6 +755,7 @@
         
         ;; loop trailer
         (local.set $x (i32.add (i32.const 1) (local.get $x)))
+        (local.set $cursor (i32.add (i32.const 4) (local.get $cursor)))
         (if (i32.lt_u (local.get $x) (local.get $max_x))
           (then (br $x_loop))))
 
@@ -693,6 +768,7 @@
       
       ;; loop trailer
       (local.set $y (i32.add (i32.const 1) (local.get $y)))
+      (local.set $cursor_y (i32.add (local.get $w_4) (local.get $cursor_y)))
       (if (i32.lt_u (local.get $y) (local.get $max_y))
         (then (br $y_loop)))))
 

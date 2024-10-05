@@ -9,6 +9,7 @@
    lux.wat
    --enable-simd
    --enable-multivalue
+   --enable-bulk-memory
    --debuginfo
    --source-map
    lux.wasm.map
@@ -16,11 +17,11 @@
    ./lux.wasm.map
    -o %{target})))
 
-; (rule
-;  (deps  (source_tree ../binaryen) lux.raw.wasm)
-;  (target lux.wasm)
-;  (action
-;   (bash "../binaryen/bin/wasm-opt ./lux.raw.wasm --enable-simd --enable-multivalue -O4 -o %{target}")))
+;  (rule
+;   (deps  (source_tree ../binaryen) lux.raw.wasm)
+;   (target lux.wasm)
+;   (action
+;    (bash "../binaryen/bin/wasm-opt ./lux.raw.wasm --enable-simd --enable-bulk-memory --enable-multivalue -O4 -o %{target}")))
 
 (rule
  (deps  lux.raw.wasm)

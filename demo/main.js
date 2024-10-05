@@ -80,7 +80,7 @@ async function main() {
     const font = await load_font("./departure.json", 2);
 
     function fillWasm(buf, r, g, b) {
-        module.instance.exports.fill_simd(buf, r, g, b, w * h);
+        module.instance.exports.fill(buf, r, g, b, w * h);
     }
 
     function line(buf, r, g, b, x0, y0, x1, y1) {
@@ -181,16 +181,19 @@ async function main() {
             }
             r += 20;
             r %= 255;
-        }*/
-
+        }
+//
+*/
         let i = 0;
         r = 0;
         for (let x = 100; x < w - 100; x+= 50) {
             let b = 0;
             for (let y = 100; y < h - 100; y+= 50) {
-                let pts = eq_tri_pts(buf, x, y, 20, performance.now() / 1000); 
+                let pseudo_rand = (x * 29323948487 + y * 1223948737);
+                let pts = eq_tri_pts(buf, x, y, 20, 
+                    performance.now() / 1000 + (pseudo_rand % 256));
                 let [p1x, p1y, p2x, p2y, p3x, p3y] = pts;
-                tri_buf.setUint32(i + 0, 0xff00ff00, true);
+                tri_buf.setUint32(i + 0, pseudo_rand & 0xffffff00, true);
 
                 tri_buf.setUint32(i + 4, p1x, true);
                 tri_buf.setUint32(i + 8, p1y, true);
@@ -210,7 +213,6 @@ async function main() {
         }
 
         many_triangles(buf, count, tri_ptr);
-
 
         // quad
         quad(buf, 250, 250, 250, 20, 20, 50, 10, 100, 100, 10, 50);
@@ -266,8 +268,8 @@ async function main() {
         let delta = after - before;
         //console.log(delta);
 
-        setTimeout(loop, 1000);
-        //window.requestAnimationFrame(loop);
+        //setTimeout(loop, 1000);
+        window.requestAnimationFrame(loop);
     }
 
     window.requestAnimationFrame(loop);
