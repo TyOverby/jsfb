@@ -1047,6 +1047,9 @@
     (local $char i32)
     (local $rgba i32)
     (local $char_width i32)
+    (local $initial_x i32)
+
+    (local.set $initial_x (local.get $x))
 
     (local.set $rgba 
       (call $lux/rgb2int (local.get $r) (local.get $g) (local.get $b)))
@@ -1059,6 +1062,13 @@
         (local.set $char (i32.load16_u (local.get $str_ptr)))
         (if (i32.eq (local.get $char) (i32.const 0))
             (then (br $leave_loop)))
+
+        (if (i32.eq (local.get $char) (i32.const 10))
+          (then
+            (local.set $x (local.get $initial_x))
+            (local.set $y (i32.add (local.get $y) (i32.const 30)))
+            (local.set $str_ptr (i32.add (i32.const 1) (local.get $str_ptr)))
+            (br $loop)))
 
         (local.set $char_width 
           (call $lux/char 

@@ -1,0 +1,154 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Custom Font in Canvas</title>
+  <style>
+    @font-face {
+      font-family: 'runescape';
+      src: url('./runescape_bold.ttf') format('woff2');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    canvas { width:100vw; height: 100vh; }
+    body { margin: 0; }
+
+    input {
+        position: absolute;
+        top:0;
+        right:0;
+    }
+  </style>
+
+  <script src="./canvas-resizer.js"> </script>
+</head>
+<body>
+  <canvas id="myCanvas" width="500" height="200"></canvas>
+  <input id="range" type="range" min=1 max=30 value="16" step="0.01"></input>
+
+  <script>
+    // Wait for the font to load before using it
+    observe(myCanvas);
+
+    var idx = 97;
+
+    var natural_size = () => parseFloat(range.value);
+
+    document.fonts.load(`${natural_size()}pt "runescape"`).then(function() {
+      var canvas = document.getElementById('myCanvas');
+      var ctx = canvas.getContext('2d', {willReadFrequently : true});
+      window.ctx = ctx;
+
+      document.body.addEventListener('keydown', function(e) {
+        if (e && e.key) {
+          if (e.key === "ArrowRight") {
+            idx ++;
+          } else if (e.key === "ArrowLeft") {
+            idx --;
+          } else {
+            console.log(e);
+            if (e.key.length === 1) {
+              idx = e.key.charCodeAt(0);
+            }
+          }
+
+          ctx.font = `${natural_size()}px runescape`;
+          const textMetrics = ctx.measureText(String.fromCharCode(idx));
+          console.log(textMetrics);
+          loop();
+        }
+      });
+
+      let all_metrics = [];
+
+      
+      function loop() {
+        resizeCanvasToDisplaySize(myCanvas, 1);
+        ctx.clearRect(0,0, myCanvas.width,myCanvas.height);
+
+        const mult = 50;
+        ctx.font = `${mult*natural_size()}px runescape`;
+        ctx.fillStyle = 'black';
+        let letter = String.fromCharCode(idx);
+        let textMetrics = ctx.measureText(letter);
+        //console.log(textMetrics);
+        //ctx.fillText(letter, textMetrics.actualBoundingBoxLeft, textMetrics.actualBoundingBoxAscent);
+        ctx.fillText(letter, 0, textMetrics.fontBoundingBoxAscent - textMetrics.fontBoundingBoxDescent);
+        //window.requestAnimationFrame(loop);
+        let img_data = ctx.getImageData(0,0,canvas.width, canvas.height);
+
+        ctx.fillStyle = "red";
+        const sample_size = 10;
+        const pixel_grid = [];
+        for (var y = 0; y < textMetrics.fontBoundingBoxAscent ; y += mult) {
+          let row = ""
+          for (var x = 0; x < textMetrics.width; x += mult) {
+            let sample_y = Math.floor(y + mult / 2);
+            let sample_x = Math.floor(x + mult / 2);
+            let pos = sample_y * img_data.width + sample_x;
+            let is_black = img_data.data[pos * 4 + 3] !== 0;
+            if (is_black) {
+              row += ("X");
+            } else {
+              row += (" ");
+            }
+
+            ctx.fillRect(x + mult / 2 - sample_size / 2 , y + mult / 2 - sample_size / 2, sample_size, sample_size);
+          }
+          pixel_grid.push(row);
+        }
+
+        ctx.font = `${1*11}px runescape`;
+        textMetrics = ctx.measureText(letter);
+        all_metrics.push({
+          char: letter,
+          code: idx,
+          pixels: pixel_grid,
+          width: Math.round(textMetrics.width),
+          actualBoundingBoxAscent : Math.round(textMetrics.actualBoundingBoxAscent),
+          actualBoundingBoxDescent : Math.round(textMetrics.actualBoundingBoxDescent),
+          actualBoundingBoxLeft : Math.round(textMetrics.actualBoundingBoxLeft),
+          actualBoundingBoxRight : Math.round(textMetrics.actualBoundingBoxRight),
+          alphabeticBaseline : Math.round(textMetrics.alphabeticBaseline),
+          fontBoundingBoxAscent : Math.round(textMetrics.fontBoundingBoxAscent),
+          fontBoundingBoxDescent : Math.round(textMetrics.fontBoundingBoxDescent),
+          hangingBaseline : Math.round(textMetrics.hangingBaseline),
+          ideographicBaseline : Math.round(textMetrics.ideographicBaseline),
+        })
+      }
+
+      (function actual_loop(){
+        loop();
+        requestAnimationFrame(actual_loop);
+      })();
+
+      //window.requestAnimationFrame(loop);
+
+      for (let char of "abcdefghijklmnopqrstuvwxyz") {
+        idx = char.charCodeAt(0);
+        loop();
+      }
+      console.log(JSON.stringify(all_metrics, null, 2));
+
+    });
+  </script>
+
+</body>
+</html>
+<!--
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title></title>
+        <meta charset="UTF-8">
+        <script defer src="./script.js"></script>
+        <link href="font.css" rel="stylesheet">
+    </head>
+<body>
+
+</body>
+</html>
+-->

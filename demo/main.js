@@ -2,7 +2,7 @@ const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext('2d');
 
 const w = 4096, h = 2160;
-let zoom = 3;
+let zoom = 1;
 
 observe(canvas);
 
@@ -35,8 +35,8 @@ async function main() {
     const buf_size = (w * h * 4);
     const buf = malloc(buf_size);
 
-    async function load_font() {
-        const letters = await (await fetch("./departure.json")).json();
+    async function load_font(json_file, scale) {
+        const letters = await (await fetch(json_file)).json();
         // hack 
         letters.push({
           char: " ",
@@ -47,21 +47,26 @@ async function main() {
         const [table_ptr, table] = malloc_dv((letters.length) * 8 + 4);
         let table_offset = 0;
         for (let letter of letters) {
+            let letter_width = letter.pixels[0].length;
             const letter_buf_size_bytes =
                 4 + // code
                 4 + // width
                 4 + // height
-                letter.width * letter.pixels.length;
+                (letter_width * scale) * (letter.pixels.length * scale);
             const [ptr, dv] = malloc_dv(letter_buf_size_bytes);
             dv.setUint32(0, letter.code, true);
-            dv.setUint32(4, letter.width, true);
-            dv.setUint32(8, letter.pixels.length, true);
+            dv.setUint32(4, letter_width * scale, true);
+            dv.setUint32(8, letter.pixels.length * scale, true);
             let i = 12;
             for (let y = 0; y < letter.pixels.length; y++) {
-                for (let x = 0; x < letter.width; x++) {
-                    const is_set = letter.pixels[y][x] === "X";
-                    dv.setUint8(i, is_set ? 1 : 0);
-                    i++;
+                for (let _a = 0; _a < scale; _a++) {
+                    for (let x = 0; x < letter_width; x++) {
+                        for (let _b = 0; _b < scale; _b++) {
+                            const is_set = letter.pixels[y][x] === "X";
+                            dv.setUint8(i, is_set ? 1 : 0);
+                            i++;
+                        }
+                    }
                 }
             }
 
@@ -72,7 +77,7 @@ async function main() {
         return table_ptr;
     }
 
-    const font = await load_font();
+    const font = await load_font("./departure.json", 2);
 
     function fillWasm(buf, r, g, b) {
         module.instance.exports.fill_simd(buf, r, g, b, w * h);
@@ -241,7 +246,7 @@ async function main() {
         }
 
         // string
-        const s = "hello world"
+        const s = "hello\nworld"
         const [string_ptr, string_dv] = malloc_dv((s.length + 1) * 2);
         string_dv.setUint16(s.length, 0, true);
         for (let i = 0; i < s.length; i++) {
