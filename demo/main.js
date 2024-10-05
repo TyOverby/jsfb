@@ -190,7 +190,7 @@ async function main() {
             for (let y = 100; y < h - 100; y+= 50) {
                 let pts = eq_tri_pts(buf, x, y, 20, performance.now() / 1000); 
                 let [p1x, p1y, p2x, p2y, p3x, p3y] = pts;
-                tri_buf.setUint32(i + 0, 0, true);
+                tri_buf.setUint32(i + 0, 0xff00ff00, true);
 
                 tri_buf.setUint32(i + 4, p1x, true);
                 tri_buf.setUint32(i + 8, p1y, true);
@@ -242,7 +242,7 @@ async function main() {
 
         // alphabet
         for (let i = 0; i < 26; i++) {
-            char(buf, font, 97 + i, 0, 0, 0, 4 + (i * 8), 300);
+            char(buf, font, 97 + i, 0, 0, 0, 4 + (i * 8 * 2), 300);
         }
 
         // string

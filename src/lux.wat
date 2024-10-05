@@ -615,6 +615,10 @@
 
     (local $i i32)
     (local $rgba i32)
+    (local $r i32)
+    (local $g i32)
+    (local $b i32)
+
 
     (local $p1x i32)
     (local $p1y i32)
@@ -632,7 +636,11 @@
         (if (i32.eq (local.get $i) (local.get $count))
            (then (br $leave_loop)))
         
+        ;; TODO: make a version of tri that takes rgba as a single int
         (local.set $rgba (i32.load (i32.add (local.get $ptr) (i32.const 0))))
+        (local.set $b (i32.and (i32.shr_u (local.get $rgba) (i32.const 8))  (i32.const 0xFF)))
+        (local.set $g (i32.and (i32.shr_u (local.get $rgba) (i32.const 16))  (i32.const 0xFF)))
+        (local.set $r (i32.and (i32.shr_u (local.get $rgba) (i32.const 24)) (i32.const 0xFF)))
 
         (local.set $p1x (i32.load (i32.add (local.get $ptr) (i32.const 4))))
         (local.set $p1y (i32.load (i32.add (local.get $ptr) (i32.const 8))))
@@ -647,7 +655,7 @@
               (local.get $p1x) (local.get $p1y) 
               (local.get $p2x) (local.get $p2y) 
               (local.get $p3x) (local.get $p3y)
-              (i32.const 255) (i32.const 0) (i32.const 0) 
+              (local.get $r) (local.get $g) (local.get $b)
               (local.get $w) (local.get $h))
         
         (local.set $i (i32.add (local.get $i) (i32.const 1)))
