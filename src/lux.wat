@@ -193,6 +193,51 @@
        (local.set $x (i32.add (i32.const 1) (local.get $x)))
        (br_if $loop (local.get $stop))))
 
+  (func $lux/thick_line_low
+    (param $buf i32)
+    (param $r i32) 
+    (param $g i32) 
+    (param $b i32) 
+    (param $x0 i32) 
+    (param $y0 i32) 
+    (param $x1 i32) 
+    (param $y1 i32) 
+    (param $w i32) 
+
+    (call $lux/line_low 
+          (local.get $buf)
+          (local.get $r)
+          (local.get $g)
+          (local.get $b)
+          (local.get $x0)
+          (local.get $y0)
+          (local.get $x1)
+          (local.get $y1)
+          (local.get $w))
+
+    (call $lux/line_low 
+          (local.get $buf)
+          (local.get $r)
+          (local.get $g)
+          (local.get $b)
+          (local.get $x0)
+          (i32.add (local.get $y0) (i32.const 1))
+          (local.get $x1)
+          (i32.add (local.get $y1) (i32.const 1))
+          (local.get $w))
+
+    (call $lux/line_low 
+          (local.get $buf)
+          (local.get $r)
+          (local.get $g)
+          (local.get $b)
+          (local.get $x0)
+          (i32.sub (local.get $y0) (i32.const 1))
+          (local.get $x1)
+          (i32.sub (local.get $y1) (i32.const 1))
+          (local.get $w))
+    )
+
   (func $lux/line_high
     (param $buf i32) 
     (param $r i32) 
@@ -304,6 +349,51 @@
       (then (local.set $x (local.get $y))))
     (local.get $x))
 
+  (func $lux/thick_line_high
+    (param $buf i32)
+    (param $r i32) 
+    (param $g i32) 
+    (param $b i32) 
+    (param $x0 i32) 
+    (param $y0 i32) 
+    (param $x1 i32) 
+    (param $y1 i32) 
+    (param $w i32) 
+
+    (call $lux/line_high
+          (local.get $buf)
+          (local.get $r)
+          (local.get $g)
+          (local.get $b)
+          (local.get $x0)
+          (local.get $y0)
+          (local.get $x1)
+          (local.get $y1)
+          (local.get $w))
+
+    (call $lux/line_high
+          (local.get $buf)
+          (local.get $r)
+          (local.get $g)
+          (local.get $b)
+          (i32.add (local.get $x0) (i32.const 1))
+          (local.get $y0)
+          (i32.add (local.get $x1) (i32.const 1))
+          (local.get $y1)
+          (local.get $w))
+
+    (call $lux/line_high
+          (local.get $buf)
+          (local.get $r)
+          (local.get $g)
+          (local.get $b)
+          (i32.sub (local.get $x0) (i32.const 1))
+          (local.get $y0)
+          (i32.sub (local.get $x1) (i32.const 1))
+          (local.get $y1)
+          (local.get $w))
+    )
+
   ;; TODO: horizontal and vertical line specialization
 
   (func $lux/line
@@ -326,7 +416,7 @@
         ;; if x0 > x1
         (if (i32.ge_u (local.get $x0) (local.get $x1))
           ;; plotLineLow(x1, y1, x0, y0)
-          (then (call $lux/line_low 
+          (then (call $lux/thick_line_low 
                   (local.get $buf)
                   (local.get $r)
                   (local.get $g)
@@ -337,7 +427,7 @@
                   (local.get $y0)
                   (local.get $w)))
           ;; plotLineLow(x0, y0, x1, y1)
-          (else (call $lux/line_low 
+          (else (call $lux/thick_line_low 
                   (local.get $buf)
                   (local.get $r)
                   (local.get $g)
@@ -351,7 +441,7 @@
         ;; if y0 > y1
         (if (i32.ge_u (local.get $y0) (local.get $y1))
           ;; plotLineHigh(x1, y1, x0, y0)
-          (then (call $lux/line_high
+          (then (call $lux/thick_line_high
                   (local.get $buf)
                   (local.get $r)
                   (local.get $g)
@@ -362,7 +452,7 @@
                   (local.get $y0)
                   (local.get $w)))
           ;; plotLineHigh(x0, y0, x1, y1)
-          (else (call $lux/line_high
+          (else (call $lux/thick_line_high
                   (local.get $buf)
                   (local.get $r)
                   (local.get $g)
