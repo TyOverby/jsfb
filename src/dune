@@ -1,12 +1,20 @@
 (rule
  (deps
   (source_tree ../binaryen)
-  lux.wat)
+  (source_tree ./))
+ (target lux.merged.wat)
+ (action
+  (bash "cpp lux.wat | sed 's/^#/;; #/' > %{target}")))
+
+(rule
+ (deps
+  (source_tree ../binaryen)
+  lux.merged.wat)
  (target lux.raw.wasm)
  (action
   (run
    ../binaryen/bin/wasm-as
-   lux.wat
+   lux.merged.wat
    --enable-simd
    --enable-multivalue
    --enable-bulk-memory
