@@ -196,13 +196,6 @@
       (if (then 
             (i32.store (local.get $cursor)
                        (local.get $rgba))))
-            
-            ;; (call $lux/put_pixel 
-            ;;             (local.get $buf)
-            ;;             (local.get $rgba)
-            ;;             (local.get $x)
-            ;;             (local.get $y)
-            ;;             (local.get $w))))
 
       ;; CX0 += CC0.A;
       (local.set $cx0 (i32.add (local.get $cx0) (local.get $cc0a)))

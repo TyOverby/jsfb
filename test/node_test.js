@@ -25,11 +25,16 @@ async function main() {
     let all_ok = true;
 
     for (let test_name in bisimulation_tests) {
+        let delta = null;
         try {
             const make_test = bisimulation_tests[test_name];
             const {basic_test, advanced_test } = await make_test(build_modules);
+
+            const before = performance.now();
             const basic_result = await basic_test();
             const advanced_result = await advanced_test();
+            const after = performance.now();
+            delta = after - before;
 
             if (basic_result.byteLength !== advanced_result.byteLength) {
                 throw new Error(`byte lengths differ: (basic ${basic_result.byteLength}) (advanced ${advanced_result.byteLength})`);
@@ -45,13 +50,14 @@ async function main() {
 
             }
 
-            console.log('\033[32m✓ ' + test_name + '\033[0m'); 
+            console.log('\033[32m✓ ' + test_name + '\033[0m ' + delta.toFixed(2) + "ms"); 
         } catch (e) {
             if (e instanceof Error) {
                 e.stack = stripPathPrefix(e.stack);
             }
+            let timing = delta ? " " + delta.toFixed(2) + "ms" : "";
 
-            console.log('\033[31m✗ ' + test_name + '\033[0m'); 
+            console.log('\033[31m✗ ' + test_name + '\033[0m' + timing); 
             console.log(e);
             all_ok = false;
         }

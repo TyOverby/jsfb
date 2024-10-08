@@ -58,10 +58,11 @@ function resizeCanvasToDisplaySize(canvas, zoom) {
 
         if (needResize) {
             // Make the canvas the same size
+            console.log("resizing");
             canvas.width = Math.floor(displayWidth / zoom);
             canvas.height = Math.floor(displayHeight / zoom);
+            canvas.zoom = zoom;
         }
-        canvas.zoom = zoom;
 
         return needResize;
     }

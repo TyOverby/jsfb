@@ -107,7 +107,7 @@ async function main() {
         module.instance.exports.string(buf, font, string, r, g, b, x, y, w, h);
     }
 
-    function eq_tri_pts(buf, cx, cy, rad, angle) {
+    function eq_tri_pts(cx, cy, rad, angle) {
         const a1 = angle;
         const a2 = 2 * Math.PI / 3 + angle;
         const a3 = 4 * Math.PI / 3 + angle;
@@ -151,47 +151,18 @@ async function main() {
 
     let [tri_ptr, tri_buf] = malloc_dv(count * (4 * 4 + 4 * 2 * 3));
 
-    let b = true;
     function loop() {
         resizeCanvasToDisplaySize(canvas, zoom);
 
+        const before = performance.now();
         fillWasm(buf, 10, 50, 10);
-
-        ctx.fillStyle = `rgb(255,255,255)`;
-        ctx.fillRect(0, 0, w, h);
-
-        let before = performance.now();
-        if (b) {
-            // fillWasm(10, 50, 10);
-        } else {
-            //fillWasm(10, 10, 50);
-        }
-        b = !b;
-
-
-        // many triangles
-        /*
-        let r = 0;
-        for (let x = 75; x < w - 75; x+= 50) {
-            let b = 0;
-            for (let y = 75; y < h - 75; y+= 50) {
-                eq_tri(buf, r, 0, b, x, y, 20, performance.now() / 1000);
-                b += 20;
-                b %= 255;
-            }
-            r += 20;
-            r %= 255;
-        }
-//
-*/
         let i = 0;
-        r = 0;
+        const curTime = new Date().getTime();
         for (let x = 100; x < w - 100; x+= 50) {
-            let b = 0;
             for (let y = 100; y < h - 100; y+= 50) {
                 let pseudo_rand = (x * 29323948487 + y * 1223948737);
-                let pts = eq_tri_pts(buf, x, y, 20, 
-                    performance.now() / 1000 + (pseudo_rand % 256));
+                let pts = eq_tri_pts(x, y, 20, 
+                    curTime / 1000 + (pseudo_rand % 256));
                 let [p1x, p1y, p2x, p2y, p3x, p3y] = pts;
                 tri_buf.setUint32(i + 0, pseudo_rand & 0xffffff00, true);
 
@@ -204,12 +175,8 @@ async function main() {
                 tri_buf.setUint32(i + 20, p3x, true);
                 tri_buf.setUint32(i + 24, p3y, true);
 
-                b += 20;
-                b %= 255;
                 i += 28;
             }
-            r += 20;
-            r %= 255;
         }
 
         many_triangles(buf, count, tri_ptr);

@@ -3,6 +3,7 @@
    ../src/lux.wasm 
    ../walloc/walloc.wasm 
    ../fonts/departure/departure.json
+   ../fonts/departure/DepartureMono-Regular.woff2
    ../fonts/vcr_osd_mono/vcr_osd_mono.json
    ../fonts/runescape/runescape.json
    ../fonts/runescape/runescape_bold.json)
@@ -13,6 +14,7 @@
    (copy ../src/lux.wasm lux.wasm)
    (copy ../walloc/walloc.wasm walloc.wasm)
    (copy ../fonts/departure/departure.json departure.json)
+   (copy ../fonts/departure/DepartureMono-Regular.woff2 DepartureMono-Regular.woff2)
    (copy ../fonts/vcr_osd_mono/vcr_osd_mono.json vcr_osd_mono.json)
    (copy ../fonts/runescape/runescape.json runescape.json)
    (copy ../fonts/runescape/runescape_bold.json runescape_bold.json))))
