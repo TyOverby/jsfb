@@ -13,25 +13,19 @@
   (param $h i32) 
 
   ;; precomputed edge function
-  (local $cc0a i32)
-  (local $cc0b i32)
-  (local $cc0c i32)
+  ;; (local $cc0a i32)
+  ;; (local $cc0b i32)
+  ;; (local $cc0c i32)
   (local $cc0av v128)
   (local $cc0av_adv v128)
   (local $cc0bv v128)
   (local $cc0cv v128)
 
-  (local $cc1a i32)
-  (local $cc1b i32)
-  (local $cc1c i32)
   (local $cc1av v128)
   (local $cc1av_adv v128)
   (local $cc1bv v128)
   (local $cc1cv v128)
 
-  (local $cc2a i32)
-  (local $cc2b i32)
-  (local $cc2c i32)
   (local $cc2av v128)
   (local $cc2av_adv v128)
   (local $cc2bv v128)
@@ -58,6 +52,7 @@
 
   ;; color 
   (local $rgba i32)
+  (local $rgba_4 v128)
 
   ;; color writing
   (local $cursor_y i32)
@@ -69,11 +64,14 @@
 
   (local.set $w_4 (i32.mul (i32.const 4) (local.get $w)))
 
+  ;; color
   (local.set $rgba 
     (call $lux/rgb2int 
           (local.get $r) 
           (local.get $g)
           (local.get $b)))
+
+  (local.set $rgba_4 (i32x4.splat (local.get $rgba)))
 
   ;; let min_x = max(0, min(v00x, min(v01x, min(v10x, v11x))))
   (local.get $v00x)
@@ -117,67 +115,36 @@
 
 
   ;; let CC0 = edgeC(v01, v00);
-  (call $lux/line_func 
+  (call $lux/line_func_simd
         (local.get $v00x) (local.get $v00y) 
         (local.get $v01x) (local.get $v01y))
-  (local.set $cc0c)
-  (local.set $cc0b)
-  (local.set $cc0a)
-
-  (local.set $cc0av 
-    (i32x4.mul 
-      (i32x4.splat (local.get $cc0a))
-      (v128.const i32x4 1 2 3 4)))
-  (local.set $cc0av_adv
-    (i32x4.add (local.get $cc0av)
-        (i32x4.mul 
-          (i32x4.splat (local.get $cc0a))
-          (v128.const i32x4 3 3 3 3))))
-  (local.set $cc0bv (i32x4.splat (local.get $cc0b)))
-  (local.set $cc0cv (i32x4.splat (local.get $cc0c)))
+  (local.set $cc0cv)
+  (local.set $cc0bv)
+  (local.set $cc0av)
 
   ;; let CC1 = edgeC(v11, v01);
-  (call $lux/line_func 
+  (call $lux/line_func_simd
         (local.get $v01x) (local.get $v01y) 
         (local.get $v10x) (local.get $v10y))
-  (local.set $cc1c)
-  (local.set $cc1b)
-  (local.set $cc1a)
-
-  (local.set $cc1av 
-    (i32x4.mul 
-      (i32x4.splat (local.get $cc1a))
-      (v128.const i32x4 1 2 3 4)))
-  (local.set $cc1av_adv
-    (i32x4.add (local.get $cc1av)
-        (i32x4.mul 
-          (i32x4.splat (local.get $cc1a))
-          (v128.const i32x4 3 3 3 3))))
-  (local.set $cc1bv (i32x4.splat (local.get $cc1b)))
-  (local.set $cc1cv (i32x4.splat (local.get $cc1c)))
+  (local.set $cc1cv)
+  (local.set $cc1bv)
+  (local.set $cc1av)
 
   ;; let CC2 = edgeC(v10, v11);
-  (call $lux/line_func 
+  (call $lux/line_func_simd
         (local.get $v10x) (local.get $v10y) 
         (local.get $v00x) (local.get $v00y))
-  (local.set $cc2c)
-  (local.set $cc2b)
-  (local.set $cc2a)
+  (local.set $cc2cv)
+  (local.set $cc2bv)
+  (local.set $cc2av)
 
-  (local.set $cc2av 
-    (i32x4.mul 
-      (i32x4.splat (local.get $cc2a))
-      (v128.const i32x4 1 2 3 4)))
-  (local.set $cc2av_adv
-    (i32x4.add (local.get $cc2av)
-        (i32x4.mul 
-          (i32x4.splat (local.get $cc2a))
-          (v128.const i32x4 3 3 3 3))))
-  (local.set $cc2bv (i32x4.splat (local.get $cc2b)))
-  (local.set $cc2cv (i32x4.splat (local.get $cc2c)))
+  ;; advance by 4
+  (local.set $cc0av_adv (i32x4.mul (local.get $cc0av) (v128.const i32x4 4 4 4 4)))
+  (local.set $cc1av_adv (i32x4.mul (local.get $cc1av) (v128.const i32x4 4 4 4 4)))
+  (local.set $cc2av_adv (i32x4.mul (local.get $cc2av) (v128.const i32x4 4 4 4 4)))
 
   ;; var CY0 = boundRectMin.x * CC0.A + boundRectMin.y * CC0.B + CC0.C;
-  (i32x4.splat (local.get $min_x))
+  (i32x4.add (i32x4.splat (local.get $min_x)) (v128.const i32x4 0 0 0 0))
   (local.get $cc0av)
   i32x4.mul
   (i32x4.splat (local.get $min_y))
@@ -189,7 +156,7 @@
   (local.set $cy0v)
 
   ;; var CY1 = boundRectMin.x * CC1.A + boundRectMin.y * CC1.B + CC1.C;
-  (i32x4.splat (local.get $min_x))
+  (i32x4.add (i32x4.splat (local.get $min_x)) (v128.const i32x4 0 0 0 0))
   (local.get $cc1av)
   i32x4.mul
   (i32x4.splat (local.get $min_y))
@@ -201,7 +168,7 @@
   (local.set $cy1v)
 
   ;; var CY2 = boundRectMin.x * CC2.A + boundRectMin.y * CC2.B + CC2.C;
-  (i32x4.splat (local.get $min_x))
+  (i32x4.add (i32x4.splat (local.get $min_x)) (v128.const i32x4 0 0 0 0))
   (local.get $cc2av)
   i32x4.mul
   (i32x4.splat (local.get $min_y))
@@ -237,19 +204,22 @@
     (local.set $cursor (local.get $cursor_y))
     (loop $x_loop
       ;; if (CX0 >= 0 || CX1 >= 0 || CX2 >= 0 || CX3 >= 0) {
-      ;; NOTE: ^ Ive inverted this check to match my intuition
-      (i32x4.gt_s (local.get $cx0v) (v128.const i32x4 0 0 0 0))
-      (i32x4.gt_s (local.get $cx1v) (v128.const i32x4 0 0 0 0))
-      (i32x4.gt_s (local.get $cx2v) (v128.const i32x4 0 0 0 0))
-      v128.or
-      v128.or
-      (i32x4.eq (v128.const i32x4 0 0 0 0))
+      (i32x4.shr_s (local.get $cx0v) (i32.const 31))
+      (i32x4.shr_s (local.get $cx1v) (i32.const 31))
+      (i32x4.shr_s (local.get $cx2v) (i32.const 31))
+      v128.and
+      v128.and
       (local.set $mask)
       (if (v128.any_true (local.get $mask))
         (then 
            (if (i32x4.all_true (local.get $mask))
-             (then (v128.store (local.get $cursor) (i32x4.splat (local.get $rgba))))
-             (else (i32.store (local.get $cursor) (local.get $rgba))))))
+             (then (v128.store (local.get $cursor) (local.get $rgba_4)))
+             (else (v128.store 
+                     (local.get $cursor)
+                     (v128.bitselect
+                         (local.get $rgba_4)
+                         (v128.load (local.get $cursor))
+                         (local.get $mask)))))))
 
       ;; CX0 += CC0.A;
       (local.set $cx0v (i32x4.add (local.get $cx0v) (local.get $cc0av_adv)))

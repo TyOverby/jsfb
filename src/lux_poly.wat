@@ -43,13 +43,13 @@
   (local.set $v0xv 
     (i32x4.add
       (i32x4.splat (local.get $v0x))
-      (v128.const i32x4 0 1 2 3)))
+      (v128.const i32x4 0 -1 -2 -3)))
   (local.set $v0yv (i32x4.splat (local.get $v0y)))
 
   (local.set $v1xv 
     (i32x4.add
       (i32x4.splat (local.get $v1x))
-      (v128.const i32x4 0 1 2 3)))
+      (v128.const i32x4 0 -1 -2 -3)))
   (local.set $v1yv (i32x4.splat (local.get $v1y)))
 
 

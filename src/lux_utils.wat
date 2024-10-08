@@ -55,3 +55,11 @@
   (if (i32.gt_s (local.get $y) (local.get $x))
     (then (local.set $x (local.get $y))))
   (local.get $x))
+
+;; (func $lux/round_down_to_nearest_multiple_of_16
+;;       (param $x i32)
+;;       (result i32)
+;; 
+;;   (if (i32.gt_s (local.get $y) (local.get $x))
+;;     (then (local.set $x (local.get $y))))
+;;   (local.get $x))
