@@ -10,7 +10,7 @@
  (deps
   (source_tree ../binaryen)
   lux.merged.wat)
- (target lux.raw.wasm)
+ (targets lux.raw.wasm lux.raw.wasm.map)
  (action
   (run
    ../binaryen/bin/wasm-as
@@ -20,19 +20,21 @@
    --enable-bulk-memory
    --debuginfo
    --source-map
-   lux.wasm.map
+   lux.raw.wasm.map
    --source-map-url
    ./lux.wasm.map
-   -o %{target})))
+   -o ./lux.raw.wasm)))
 
-  (rule
-   (deps  (source_tree ../binaryen) lux.raw.wasm)
-   (target lux.wasm)
-   (action
-    (bash "../binaryen/bin/wasm-opt ./lux.raw.wasm --enable-simd --enable-bulk-memory --enable-multivalue -O4 -o %{target}")))
+;   (rule
+;    (deps  (source_tree ../binaryen) lux.raw.wasm)
+;    (target lux.wasm)
+;    (action
+;     (bash "../binaryen/bin/wasm-opt ./lux.raw.wasm --enable-simd --enable-bulk-memory --enable-multivalue -O4 -o %{target}")))
 
-; (rule
-;  (deps  lux.raw.wasm)
-;  (target lux.wasm)
-;  (action
-;   (copy lux.raw.wasm lux.wasm)))
+(rule
+ (deps  lux.raw.wasm lux.raw.wasm.map)
+ (targets lux.wasm lux.wasm.map)
+ (action
+  (progn
+   (copy lux.raw.wasm lux.wasm)
+   (copy lux.raw.wasm.map lux.wasm.map))))

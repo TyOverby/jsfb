@@ -16,14 +16,26 @@
   (local $cc0a i32)
   (local $cc0b i32)
   (local $cc0c i32)
+  (local $cc0av v128)
+  (local $cc0av_adv v128)
+  (local $cc0bv v128)
+  (local $cc0cv v128)
 
   (local $cc1a i32)
   (local $cc1b i32)
   (local $cc1c i32)
+  (local $cc1av v128)
+  (local $cc1av_adv v128)
+  (local $cc1bv v128)
+  (local $cc1cv v128)
 
   (local $cc2a i32)
   (local $cc2b i32)
   (local $cc2c i32)
+  (local $cc2av v128)
+  (local $cc2av_adv v128)
+  (local $cc2bv v128)
+  (local $cc2cv v128)
 
   ;; bounding box
   (local $min_x i32)
@@ -32,13 +44,13 @@
   (local $max_y i32)
 
   ;; evaluations
-  (local $cy0 i32)
-  (local $cy1 i32)
-  (local $cy2 i32)
+  (local $cy0v v128)
+  (local $cy1v v128)
+  (local $cy2v v128)
 
-  (local $cx0 i32)
-  (local $cx1 i32)
-  (local $cx2 i32)
+  (local $cx0v v128)
+  (local $cx1v v128)
+  (local $cx2v v128)
 
   ;; loop vars
   (local $x i32)
@@ -47,11 +59,13 @@
   ;; color 
   (local $rgba i32)
 
-
   ;; color writing
   (local $cursor_y i32)
   (local $cursor i32)
   (local $w_4 i32)
+
+  ;; vector masking
+  (local $mask v128)
 
   (local.set $w_4 (i32.mul (i32.const 4) (local.get $w)))
 
@@ -110,6 +124,18 @@
   (local.set $cc0b)
   (local.set $cc0a)
 
+  (local.set $cc0av 
+    (i32x4.mul 
+      (i32x4.splat (local.get $cc0a))
+      (v128.const i32x4 1 2 3 4)))
+  (local.set $cc0av_adv
+    (i32x4.add (local.get $cc0av)
+        (i32x4.mul 
+          (i32x4.splat (local.get $cc0a))
+          (v128.const i32x4 3 3 3 3))))
+  (local.set $cc0bv (i32x4.splat (local.get $cc0b)))
+  (local.set $cc0cv (i32x4.splat (local.get $cc0c)))
+
   ;; let CC1 = edgeC(v11, v01);
   (call $lux/line_func 
         (local.get $v01x) (local.get $v01y) 
@@ -117,6 +143,18 @@
   (local.set $cc1c)
   (local.set $cc1b)
   (local.set $cc1a)
+
+  (local.set $cc1av 
+    (i32x4.mul 
+      (i32x4.splat (local.get $cc1a))
+      (v128.const i32x4 1 2 3 4)))
+  (local.set $cc1av_adv
+    (i32x4.add (local.get $cc1av)
+        (i32x4.mul 
+          (i32x4.splat (local.get $cc1a))
+          (v128.const i32x4 3 3 3 3))))
+  (local.set $cc1bv (i32x4.splat (local.get $cc1b)))
+  (local.set $cc1cv (i32x4.splat (local.get $cc1c)))
 
   ;; let CC2 = edgeC(v10, v11);
   (call $lux/line_func 
@@ -126,41 +164,53 @@
   (local.set $cc2b)
   (local.set $cc2a)
 
+  (local.set $cc2av 
+    (i32x4.mul 
+      (i32x4.splat (local.get $cc2a))
+      (v128.const i32x4 1 2 3 4)))
+  (local.set $cc2av_adv
+    (i32x4.add (local.get $cc2av)
+        (i32x4.mul 
+          (i32x4.splat (local.get $cc2a))
+          (v128.const i32x4 3 3 3 3))))
+  (local.set $cc2bv (i32x4.splat (local.get $cc2b)))
+  (local.set $cc2cv (i32x4.splat (local.get $cc2c)))
+
   ;; var CY0 = boundRectMin.x * CC0.A + boundRectMin.y * CC0.B + CC0.C;
-  (local.get $min_x)
-  (local.get $cc0a)
-  i32.mul
-  (local.get $min_y)
-  (local.get $cc0b)
-  i32.mul
-  (local.get $cc0c)
-  i32.add
-  i32.add
-  (local.set $cy0)
+  (i32x4.splat (local.get $min_x))
+  (local.get $cc0av)
+  i32x4.mul
+  (i32x4.splat (local.get $min_y))
+  (local.get $cc0bv)
+  i32x4.mul
+  (local.get $cc0cv)
+  i32x4.add
+  i32x4.add
+  (local.set $cy0v)
 
   ;; var CY1 = boundRectMin.x * CC1.A + boundRectMin.y * CC1.B + CC1.C;
-  (local.get $min_x)
-  (local.get $cc1a)
-  i32.mul
-  (local.get $min_y)
-  (local.get $cc1b)
-  i32.mul
-  (local.get $cc1c)
-  i32.add
-  i32.add
-  (local.set $cy1)
+  (i32x4.splat (local.get $min_x))
+  (local.get $cc1av)
+  i32x4.mul
+  (i32x4.splat (local.get $min_y))
+  (local.get $cc1bv)
+  i32x4.mul
+  (local.get $cc1cv)
+  i32x4.add
+  i32x4.add
+  (local.set $cy1v)
 
   ;; var CY2 = boundRectMin.x * CC2.A + boundRectMin.y * CC2.B + CC2.C;
-  (local.get $min_x)
-  (local.get $cc2a)
-  i32.mul
-  (local.get $min_y)
-  (local.get $cc2b)
-  i32.mul
-  (local.get $cc2c)
-  i32.add
-  i32.add
-  (local.set $cy2)
+  (i32x4.splat (local.get $min_x))
+  (local.get $cc2av)
+  i32x4.mul
+  (i32x4.splat (local.get $min_y))
+  (local.get $cc2bv)
+  i32x4.mul
+  (local.get $cc2cv)
+  i32x4.add
+  i32x4.add
+  (local.set $cy2v)
 
   ;; for (var y: f32 = boundRectMin.y; y < boundRectMax.y; y += 1.0) {
   (local.set $x (local.get $min_x))
@@ -176,11 +226,11 @@
 
   (loop $y_loop
     ;; var CX0 = CY0;
-    (local.set $cx0 (local.get $cy0))
+    (local.set $cx0v (local.get $cy0v))
     ;; var CX1 = CY1;
-    (local.set $cx1 (local.get $cy1))
+    (local.set $cx1v (local.get $cy1v))
     ;; var CX2 = CY2;
-    (local.set $cx2 (local.get $cy2))
+    (local.set $cx2v (local.get $cy2v))
 
     ;; for (var x: f32 = boundRectMin.x; x < boundRectMax.x; x += 1.0) {
     (local.set $x (local.get $min_x))
@@ -188,40 +238,269 @@
     (loop $x_loop
       ;; if (CX0 >= 0 || CX1 >= 0 || CX2 >= 0 || CX3 >= 0) {
       ;; NOTE: ^ Ive inverted this check to match my intuition
-      (i32.gt_s (local.get $cx0) (i32.const 0))
-      (i32.gt_s (local.get $cx1) (i32.const 0))
-      (i32.gt_s (local.get $cx2) (i32.const 0))
-      i32.or i32.or
-      (i32.eq (i32.const 0))
-      (if (then 
-            (i32.store (local.get $cursor)
-                       (local.get $rgba))))
+      (i32x4.gt_s (local.get $cx0v) (v128.const i32x4 0 0 0 0))
+      (i32x4.gt_s (local.get $cx1v) (v128.const i32x4 0 0 0 0))
+      (i32x4.gt_s (local.get $cx2v) (v128.const i32x4 0 0 0 0))
+      v128.or
+      v128.or
+      (i32x4.eq (v128.const i32x4 0 0 0 0))
+      (local.set $mask)
+      (if (v128.any_true (local.get $mask))
+        (then 
+           (if (i32x4.all_true (local.get $mask))
+             (then (v128.store (local.get $cursor) (i32x4.splat (local.get $rgba))))
+             (else (i32.store (local.get $cursor) (local.get $rgba))))))
 
       ;; CX0 += CC0.A;
-      (local.set $cx0 (i32.add (local.get $cx0) (local.get $cc0a)))
+      (local.set $cx0v (i32x4.add (local.get $cx0v) (local.get $cc0av_adv)))
       ;; CX1 += CC1.A;
-      (local.set $cx1 (i32.add (local.get $cx1) (local.get $cc1a)))
+      (local.set $cx1v (i32x4.add (local.get $cx1v) (local.get $cc1av_adv)))
       ;; CX2 += CC2.A;
-      (local.set $cx2 (i32.add (local.get $cx2) (local.get $cc2a)))
+      (local.set $cx2v (i32x4.add (local.get $cx2v) (local.get $cc2av_adv)))
       
       ;; loop trailer
-      (local.set $x (i32.add (i32.const 1) (local.get $x)))
-      (local.set $cursor (i32.add (i32.const 4) (local.get $cursor)))
+      (local.set $x (i32.add (i32.const 4) (local.get $x)))
+      (local.set $cursor (i32.add (i32.const 16) (local.get $cursor)))
       (if (i32.lt_u (local.get $x) (local.get $max_x))
         (then (br $x_loop))))
 
     ;; CY0 += CC0.B;
-    (local.set $cy0 (i32.add (local.get $cy0) (local.get $cc0b)))
+    (local.set $cy0v (i32x4.add (local.get $cy0v) (local.get $cc0bv)))
     ;; CY1 += CC1.B;
-    (local.set $cy1 (i32.add (local.get $cy1) (local.get $cc1b)))
+    (local.set $cy1v (i32x4.add (local.get $cy1v) (local.get $cc1bv)))
     ;; CY2 += CC2.B;
-    (local.set $cy2 (i32.add (local.get $cy2) (local.get $cc2b)))
+    (local.set $cy2v (i32x4.add (local.get $cy2v) (local.get $cc2bv)))
     
     ;; loop trailer
     (local.set $y (i32.add (i32.const 1) (local.get $y)))
     (local.set $cursor_y (i32.add (local.get $w_4) (local.get $cursor_y)))
     (if (i32.lt_u (local.get $y) (local.get $max_y))
       (then (br $y_loop)))))
+
+;; (func $lux/tri_simd
+;;   (param $buf i32) 
+;;   (param $v00x i32) 
+;;   (param $v00y i32) 
+;;   (param $v01x i32) 
+;;   (param $v01y i32) 
+;;   (param $v10x i32) 
+;;   (param $v10y i32) 
+;;   (param $r i32) 
+;;   (param $g i32) 
+;;   (param $b i32) 
+;;   (param $w i32) 
+;;   (param $h i32) 
+;; 
+;;   ;; precomputed edge function
+;;   (local $cc0a i32)
+;;   (local $cc0b i32)
+;;   (local $cc0c i32)
+;; 
+;;   (local $cc1a i32)
+;;   (local $cc1b i32)
+;;   (local $cc1c i32)
+;; 
+;;   (local $cc2a i32)
+;;   (local $cc2b i32)
+;;   (local $cc2c i32)
+;; 
+;;   ;; bounding box
+;;   (local $min_x i32)
+;;   (local $min_y i32)
+;;   (local $max_x i32)
+;;   (local $max_y i32)
+;; 
+;;   ;; evaluations
+;;   (local $cy0 i32)
+;;   (local $cy1 i32)
+;;   (local $cy2 i32)
+;; 
+;;   (local $cx0 i32)
+;;   (local $cx1 i32)
+;;   (local $cx2 i32)
+;; 
+;;   ;; loop vars
+;;   (local $x i32)
+;;   (local $y i32)
+;; 
+;;   ;; color 
+;;   (local $rgba i32)
+;; 
+;; 
+;;   ;; color writing
+;;   (local $cursor_y i32)
+;;   (local $cursor i32)
+;;   (local $w_4 i32)
+;; 
+;;   (local.set $w_4 (i32.mul (i32.const 4) (local.get $w)))
+;; 
+;;   (local.set $rgba 
+;;     (call $lux/rgb2int 
+;;           (local.get $r) 
+;;           (local.get $g)
+;;           (local.get $b)))
+;; 
+;;   ;; let min_x = max(0, min(v00x, min(v01x, min(v10x, v11x))))
+;;   (local.get $v00x)
+;;   (local.get $v01x)
+;;   (local.get $v10x)
+;;   (call $lux/min32s)
+;;   (call $lux/min32s)
+;;   (i32.const 0)
+;;   (call $lux/max32s)
+;;   (local.set $min_x)
+;; 
+;;   ;; let min_y = max(0, min(v00y, min(v01y, min(v10y, v11y))))
+;;   (local.get $v00y)
+;;   (local.get $v01y)
+;;   (local.get $v10y)
+;;   (call $lux/min32s)
+;;   (call $lux/min32s)
+;;   (i32.const 0)
+;;   (call $lux/max32s)
+;;   (local.set $min_y)
+;; 
+;;   ;; let max_x = min(w, max(v00x, max(v01x, max(v10x, v11x))))
+;;   (local.get $v00x)
+;;   (local.get $v01x)
+;;   (local.get $v10x)
+;;   (call $lux/max32s)
+;;   (call $lux/max32s)
+;;   (local.get $w)
+;;   (call $lux/min32s)
+;;   (local.set $max_x)
+;; 
+;;   ;; let max_y = min(h, max(v00y, max(v01y, max(v10y, v11y))))
+;;   (local.get $v00y)
+;;   (local.get $v01y)
+;;   (local.get $v10y)
+;;   (call $lux/max32s)
+;;   (call $lux/max32s)
+;;   (local.get $h)
+;;   (call $lux/min32s)
+;;   (local.set $max_y)
+;; 
+;; 
+;;   ;; let CC0 = edgeC(v01, v00);
+;;   (call $lux/line_func 
+;;         (local.get $v00x) (local.get $v00y) 
+;;         (local.get $v01x) (local.get $v01y))
+;;   (local.set $cc0c)
+;;   (local.set $cc0b)
+;;   (local.set $cc0a)
+;; 
+;;   ;; let CC1 = edgeC(v11, v01);
+;;   (call $lux/line_func 
+;;         (local.get $v01x) (local.get $v01y) 
+;;         (local.get $v10x) (local.get $v10y))
+;;   (local.set $cc1c)
+;;   (local.set $cc1b)
+;;   (local.set $cc1a)
+;; 
+;;   ;; let CC2 = edgeC(v10, v11);
+;;   (call $lux/line_func 
+;;         (local.get $v10x) (local.get $v10y) 
+;;         (local.get $v00x) (local.get $v00y))
+;;   (local.set $cc2c)
+;;   (local.set $cc2b)
+;;   (local.set $cc2a)
+;; 
+;;   ;; var CY0 = boundRectMin.x * CC0.A + boundRectMin.y * CC0.B + CC0.C;
+;;   (local.get $min_x)
+;;   (local.get $cc0a)
+;;   i32.mul
+;;   (local.get $min_y)
+;;   (local.get $cc0b)
+;;   i32.mul
+;;   (local.get $cc0c)
+;;   i32.add
+;;   i32.add
+;;   (local.set $cy0)
+;; 
+;;   ;; var CY1 = boundRectMin.x * CC1.A + boundRectMin.y * CC1.B + CC1.C;
+;;   (local.get $min_x)
+;;   (local.get $cc1a)
+;;   i32.mul
+;;   (local.get $min_y)
+;;   (local.get $cc1b)
+;;   i32.mul
+;;   (local.get $cc1c)
+;;   i32.add
+;;   i32.add
+;;   (local.set $cy1)
+;; 
+;;   ;; var CY2 = boundRectMin.x * CC2.A + boundRectMin.y * CC2.B + CC2.C;
+;;   (local.get $min_x)
+;;   (local.get $cc2a)
+;;   i32.mul
+;;   (local.get $min_y)
+;;   (local.get $cc2b)
+;;   i32.mul
+;;   (local.get $cc2c)
+;;   i32.add
+;;   i32.add
+;;   (local.set $cy2)
+;; 
+;;   ;; for (var y: f32 = boundRectMin.y; y < boundRectMax.y; y += 1.0) {
+;;   (local.set $x (local.get $min_x))
+;;   (local.set $y (local.get $min_y))
+;; 
+;;   ;; setting up pixel locations
+;;   (i32.mul (local.get $w) (local.get $y))
+;;   (i32.add (local.get $x))
+;;   (i32.mul (i32.const 4))
+;;   (i32.add (local.get $buf))
+;;   (local.set $cursor_y)
+;;   (local.set $cursor (local.get $cursor_y))
+;; 
+;;   (loop $y_loop
+;;     ;; var CX0 = CY0;
+;;     (local.set $cx0v (local.get $cy0v))
+;;     ;; var CX1 = CY1;
+;;     (local.set $cx1v (local.get $cy1v))
+;;     ;; var CX2 = CY2;
+;;     (local.set $cx2v (local.get $cy2v))
+;; 
+;;     ;; for (var x: f32 = boundRectMin.x; x < boundRectMax.x; x += 1.0) {
+;;     (local.set $x (local.get $min_x))
+;;     (local.set $cursor (local.get $cursor_y))
+;;     (loop $x_loop
+;;       ;; if (CX0 >= 0 || CX1 >= 0 || CX2 >= 0 || CX3 >= 0) {
+;;       ;; NOTE: ^ Ive inverted this check to match my intuition
+;;       (i32.gt_s (local.get $cx0) (i32.const 0))
+;;       (i32.gt_s (local.get $cx1) (i32.const 0))
+;;       (i32.gt_s (local.get $cx2) (i32.const 0))
+;;       i32.or i32.or
+;;       (i32.eq (i32.const 0))
+;;       (if (then 
+;;             (i32.store (local.get $cursor)
+;;                        (local.get $rgba))))
+;; 
+;;       ;; CX0 += CC0.A;
+;;       (local.set $cx0 (i32.add (local.get $cx0) (local.get $cc0a)))
+;;       ;; CX1 += CC1.A;
+;;       (local.set $cx1 (i32.add (local.get $cx1) (local.get $cc1a)))
+;;       ;; CX2 += CC2.A;
+;;       (local.set $cx2 (i32.add (local.get $cx2) (local.get $cc2a)))
+;;       
+;;       ;; loop trailer
+;;       (local.set $x (i32.add (i32.const 1) (local.get $x)))
+;;       (local.set $cursor (i32.add (i32.const 4) (local.get $cursor)))
+;;       (if (i32.lt_u (local.get $x) (local.get $max_x))
+;;         (then (br $x_loop))))
+;; 
+;;     ;; CY0 += CC0.B;
+;;     (local.set $cy0v (i32.add (local.get $cy0v) (local.get $cc0bv)))
+;;     ;; CY1 += CC1.B;
+;;     (local.set $cy1v (i32.add (local.get $cy1v) (local.get $cc1bv)))
+;;     ;; CY2 += CC2.B;
+;;     (local.set $cy2v (i32.add (local.get $cy2v) (local.get $cc2bv)))
+;;     
+;;     ;; loop trailer
+;;     (local.set $y (i32.add (i32.const 1) (local.get $y)))
+;;     (local.set $cursor_y (i32.add (local.get $w_4) (local.get $cursor_y)))
+;;     (if (i32.lt_u (local.get $y) (local.get $max_y))
+;;       (then (br $y_loop)))))
 
 (func $lux/many_triangles
   (param $buf i32)

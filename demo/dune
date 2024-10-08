@@ -1,17 +1,19 @@
 (rule
  (deps 
    ../src/lux.wasm 
+   ../src/lux.wasm.map
    ../walloc/walloc.wasm 
    ../fonts/departure/departure.json
    ../fonts/departure/DepartureMono-Regular.woff2
    ../fonts/vcr_osd_mono/vcr_osd_mono.json
    ../fonts/runescape/runescape.json
    ../fonts/runescape/runescape_bold.json)
- (targets lux.wasm walloc.wasm departure.json vcr_osd_mono.json runescape.json runescape_bold.json)
+ (targets lux.wasm lux.wasm.map walloc.wasm departure.json vcr_osd_mono.json runescape.json runescape_bold.json)
  (mode promote)
  (action
   (progn
    (copy ../src/lux.wasm lux.wasm)
+   (copy ../src/lux.wasm.map lux.wasm.map)
    (copy ../walloc/walloc.wasm walloc.wasm)
    (copy ../fonts/departure/departure.json departure.json)
    (copy ../fonts/departure/DepartureMono-Regular.woff2 DepartureMono-Regular.woff2)
