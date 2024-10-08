@@ -4,7 +4,9 @@
   (source_tree ./))
  (target lux.merged.wat)
  (action
-  (bash "cpp lux.wat | sed 's/^#/;; #/' > %{target}")))
+  (setenv DEBUG 0
+  (setenv CARE_ABOUT_ALIGNMENT 0
+   (bash "cpp -DDEBUG=$DEBUG -DCARE_ABOUT_ALIGNMENT=$CARE_ABOUT_ALIGNMENT lux.wat | sed 's/^#/;; #/' > %{target}")))))
 
 (rule
  (deps
@@ -13,30 +15,30 @@
  (targets lux.raw.wasm lux.raw.wasm.map)
  (action
   (run
-   ../binaryen/bin/wasm-as
-   lux.merged.wat
-   --enable-simd
-   --enable-multivalue
-   --enable-bulk-memory
-   --debuginfo
-   --source-map
-   lux.raw.wasm.map
-   --source-map-url
-   ./lux.wasm.map
-   -o ./lux.raw.wasm)))
+    ../binaryen/bin/wasm-as
+    lux.merged.wat
+    --enable-simd
+    --enable-multivalue
+    --enable-bulk-memory
+    --debuginfo
+    --source-map
+    lux.raw.wasm.map
+    --source-map-url
+    ./lux.wasm.map
+    -o ./lux.raw.wasm)))
 
-   (rule
-    (deps  (source_tree ../binaryen) lux.raw.wasm)
-    (targets lux.wasm lux.wasm.map)
-    (action
-     (run 
-       ../binaryen/bin/wasm-opt 
-       ./lux.raw.wasm 
-       --enable-simd --enable-bulk-memory --enable-multivalue 
-       -O4 
-       --input-source-map lux.raw.wasm.map
-       --output-source-map lux.wasm.map
-       -o lux.wasm)))
+(rule
+ (deps  (source_tree ../binaryen) lux.raw.wasm)
+ (targets lux.wasm lux.wasm.map)
+ (action
+  (run 
+    ../binaryen/bin/wasm-opt 
+    ./lux.raw.wasm 
+    --enable-simd --enable-bulk-memory --enable-multivalue 
+    -O4 
+    --input-source-map lux.raw.wasm.map
+    --output-source-map lux.wasm.map
+    -o lux.wasm)))
 
 ; (rule
 ;  (deps  lux.raw.wasm lux.raw.wasm.map)

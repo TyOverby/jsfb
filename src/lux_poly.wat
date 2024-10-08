@@ -52,7 +52,6 @@
       (v128.const i32x4 0 -1 -2 -3)))
   (local.set $v1yv (i32x4.splat (local.get $v1y)))
 
-
   ;; result.A = v1.y - v0.y; 
   (local.set $a (i32x4.sub (local.get $v1yv) (local.get $v0yv)))
   ;; result.B = -v1.x + v0.x; 

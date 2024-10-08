@@ -1,3 +1,9 @@
+#if CARE_ABOUT_ALIGNMENT
+#define if_care_about_alignment(x) x
+#else
+#define if_care_about_alignment(x)
+#endif
+
 ;; Combine rgb byte components into a single i32 for the pixel
 (func $lux/rgb2int
     (param $r i32) 
@@ -56,10 +62,33 @@
     (then (local.set $x (local.get $y))))
   (local.get $x))
 
-;; (func $lux/round_down_to_nearest_multiple_of_16
-;;       (param $x i32)
-;;       (result i32)
-;; 
-;;   (if (i32.gt_s (local.get $y) (local.get $x))
-;;     (then (local.set $x (local.get $y))))
-;;   (local.get $x))
+(func $lux/assert 
+      (param $p i32)
+  (if (local.get $p) 
+    (then nop)
+    (else unreachable)))
+
+
+(func $lux/round_down_to_nearest_multiple_of_4
+      (param $x i32)
+      (result i32)
+  (i32.and (local.get $x) (i32.xor (i32.const -1) (i32.const 3))))
+
+(func $lux/round_down_to_nearest_multiple_of_16
+      (param $x i32)
+      (result i32)
+  (i32.and (local.get $x) (i32.xor (i32.const -1) (i32.const 15))))
+
+(func $lux/is_multiple_of_16
+      (param $x i32)
+      (result i32)
+  (i32.eq 
+    (i32.const 0)
+    (i32.and (local.get $x) (i32.const 15))))
+
+(func $lux/is_multiple_of_4
+      (param $x i32)
+      (result i32)
+  (i32.eq 
+    (i32.const 0)
+    (i32.and (local.get $x) (i32.const 3))))

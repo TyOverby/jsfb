@@ -59,8 +59,17 @@
   (local $cursor i32)
   (local $w_4 i32)
 
+  ;; x pos correction
+  (local $starting_x_bytes i32)
+  (local $offset_x_bytes i32)
+
   ;; vector masking
   (local $mask v128)
+
+  #if DEBUG && CARE_ABOUT_ALIGNMENT
+  ;; (call $lux/assert (call $lux/is_multiple_of_16 (local.get $buf)))
+  (call $lux/assert (call $lux/is_multiple_of_4 (local.get $w)))
+  #endif
 
   (local.set $w_4 (i32.mul (i32.const 4) (local.get $w)))
 
@@ -82,6 +91,26 @@
   (i32.const 0)
   (call $lux/max32s)
   (local.set $min_x)
+
+  ;; compute the byte offset with this min_x
+  #if CARE_ABOUT_ALIGNMENT
+  (local.get $min_x)
+  (i32.mul (i32.const 4))
+  (local.get $buf)
+  i32.add 
+  (local.set $starting_x_bytes)
+
+  (local.set $offset_x_bytes 
+    (i32.sub 
+      (local.get $starting_x_bytes)
+      (call $lux/round_down_to_nearest_multiple_of_16 
+            (local.get $starting_x_bytes))))
+
+  (local.set $min_x 
+    (i32.sub
+      (local.get $min_x)
+      (i32.div_u (local.get $offset_x_bytes) (i32.const 4))))
+  #endif
 
   ;; let min_y = max(0, min(v00y, min(v01y, min(v10y, v11y))))
   (local.get $v00y)
@@ -113,7 +142,6 @@
   (call $lux/min32s)
   (local.set $max_y)
 
-
   ;; let CC0 = edgeC(v01, v00);
   (call $lux/line_func_simd
         (local.get $v00x) (local.get $v00y) 
@@ -139,12 +167,12 @@
   (local.set $cc2av)
 
   ;; advance by 4
-  (local.set $cc0av_adv (i32x4.mul (local.get $cc0av) (v128.const i32x4 4 4 4 4)))
-  (local.set $cc1av_adv (i32x4.mul (local.get $cc1av) (v128.const i32x4 4 4 4 4)))
-  (local.set $cc2av_adv (i32x4.mul (local.get $cc2av) (v128.const i32x4 4 4 4 4)))
+  (local.set $cc0av_adv (i32x4.shl (local.get $cc0av) (i32.const 2)))
+  (local.set $cc1av_adv (i32x4.shl (local.get $cc1av) (i32.const 2)))
+  (local.set $cc2av_adv (i32x4.shl (local.get $cc2av) (i32.const 2)))
 
   ;; var CY0 = boundRectMin.x * CC0.A + boundRectMin.y * CC0.B + CC0.C;
-  (i32x4.add (i32x4.splat (local.get $min_x)) (v128.const i32x4 0 0 0 0))
+  (i32x4.splat (local.get $min_x))
   (local.get $cc0av)
   i32x4.mul
   (i32x4.splat (local.get $min_y))
@@ -156,7 +184,7 @@
   (local.set $cy0v)
 
   ;; var CY1 = boundRectMin.x * CC1.A + boundRectMin.y * CC1.B + CC1.C;
-  (i32x4.add (i32x4.splat (local.get $min_x)) (v128.const i32x4 0 0 0 0))
+  (i32x4.splat (local.get $min_x))
   (local.get $cc1av)
   i32x4.mul
   (i32x4.splat (local.get $min_y))
@@ -168,7 +196,7 @@
   (local.set $cy1v)
 
   ;; var CY2 = boundRectMin.x * CC2.A + boundRectMin.y * CC2.B + CC2.C;
-  (i32x4.add (i32x4.splat (local.get $min_x)) (v128.const i32x4 0 0 0 0))
+  (i32x4.splat (local.get $min_x)) 
   (local.get $cc2av)
   i32x4.mul
   (i32x4.splat (local.get $min_y))
@@ -203,23 +231,28 @@
     (local.set $x (local.get $min_x))
     (local.set $cursor (local.get $cursor_y))
     (loop $x_loop
+
+      #if DEBUG && CARE_ABOUT_ALIGNMENT
+      (call $lux/assert (call $lux/is_multiple_of_16 (local.get $cursor)))
+      #endif
+
       ;; if (CX0 >= 0 || CX1 >= 0 || CX2 >= 0 || CX3 >= 0) {
-      (i32x4.shr_s (local.get $cx0v) (i32.const 31))
-      (i32x4.shr_s (local.get $cx1v) (i32.const 31))
-      (i32x4.shr_s (local.get $cx2v) (i32.const 31))
-      v128.and
-      v128.and
+      (i32x4.gt_s (local.get $cx0v) (v128.const i32x4 0 0 0 0))
+      (i32x4.gt_s (local.get $cx1v) (v128.const i32x4 0 0 0 0))
+      (i32x4.gt_s (local.get $cx2v) (v128.const i32x4 0 0 0 0))
+      v128.or
+      v128.or
+      (i32x4.eq (v128.const i32x4 0 0 0 0))
       (local.set $mask)
       (if (v128.any_true (local.get $mask))
-        (then 
-           (if (i32x4.all_true (local.get $mask))
-             (then (v128.store (local.get $cursor) (local.get $rgba_4)))
-             (else (v128.store 
-                     (local.get $cursor)
-                     (v128.bitselect
-                         (local.get $rgba_4)
-                         (v128.load (local.get $cursor))
-                         (local.get $mask)))))))
+        (then (if (i32x4.all_true (local.get $mask))
+           (then (v128.store if_care_about_alignment(align=4) (local.get $cursor) (local.get $rgba_4)))
+           (else (v128.store if_care_about_alignment(align=4)
+                   (local.get $cursor)
+                   (v128.bitselect
+                       (local.get $rgba_4)
+                       (v128.load if_care_about_alignment(align=4) (local.get $cursor))
+                       (local.get $mask)))))))
 
       ;; CX0 += CC0.A;
       (local.set $cx0v (i32x4.add (local.get $cx0v) (local.get $cc0av_adv)))

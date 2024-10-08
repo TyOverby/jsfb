@@ -5,6 +5,7 @@
 - https://fgiesen.wordpress.com/2013/02/10/optimizing-the-basic-rasterizer/
 - http://members.chello.at/~easyfilter/bresenham.html
 - https://github.com/rektdeckard/departure-mono
+- https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md
 
 # Todo
 - [ ] Rename everything to "lux"
