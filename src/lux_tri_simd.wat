@@ -248,12 +248,18 @@
       (if (v128.any_true (local.get $mask))
         (then (if (i32x4.all_true (local.get $mask))
            (then (v128.store if_care_about_alignment(align=4) (local.get $cursor) (local.get $rgba_4)))
-           (else (v128.store if_care_about_alignment(align=4)
-                   (local.get $cursor)
-                   (v128.bitselect
-                       (local.get $rgba_4)
-                       (v128.load if_care_about_alignment(align=4) (local.get $cursor))
-                       (local.get $mask)))))))
+           (else 
+             (i32x4.extract_lane 0 (local.get $mask))
+             (if (then (i32.store offset=0 (local.get $cursor) (local.get $rgba))))
+
+             (i32x4.extract_lane 1 (local.get $mask))
+             (if (then (i32.store offset=4 (local.get $cursor) (local.get $rgba))))
+
+             (i32x4.extract_lane 2 (local.get $mask))
+             (if (then (i32.store offset=8 (local.get $cursor) (local.get $rgba))))
+
+             (i32x4.extract_lane 3 (local.get $mask))
+             (if (then (i32.store offset=12 (local.get $cursor) (local.get $rgba))))))))
 
       ;; CX0 += CC0.A;
       (local.set $cx0v (i32x4.add (local.get $cx0v) (local.get $cc0av_adv)))
@@ -265,6 +271,8 @@
       ;; loop trailer
       (local.set $x (i32.add (i32.const 4) (local.get $x)))
       (local.set $cursor (i32.add (i32.const 16) (local.get $cursor)))
+      ;; TODO: maybe it would be faster to add one to max_x and max_y 
+      ;; so we could use the `lt_u` instruction?
       (if (i32.le_u (local.get $x) (local.get $max_x))
         (then (br $x_loop))))
 
