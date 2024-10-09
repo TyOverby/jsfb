@@ -99,6 +99,20 @@ const wasm_fill_memcpy = ({w, h, r, g, b}) => (params) => {
     return region_dv;
 }
 
+const wasm_tri = ({w, h, r, g, b, x1, y1, x2, y2, x3, y3}) => (params) => {
+    const {calloc, walloc, lux} = params;
+    const { region_dv, dv, ptr } = overallocate_img_buf(params, w, h);
+    lux.tri(ptr, x1, y1, x2, y2, x3, y3, r, g, b, w, h);
+    return region_dv;
+}
+
+const wasm_tri_simd = ({w, h, r, g, b, x1, y1, x2, y2, x3, y3}) => (params) => {
+    const {calloc, walloc, lux} = params;
+    const { region_dv, dv, ptr } = overallocate_img_buf(params, w, h);
+    lux.tri_simd(ptr, x1, y1, x2, y2, x3, y3, r, g, b, w, h);
+    return region_dv;
+}
+
 const bisimulation_tests = { 
     fill_1x1_one_at_a_time : make_bi_test(
       basic_fill({w:1, h:1, r:255, g: 125, b: 16}), 
@@ -114,15 +128,24 @@ const bisimulation_tests = {
       basic_fill({w:8, h:8, r:255, g: 125, b: 16}), 
       wasm_fill_simd({w:8, h:8, r:255, g: 125, b: 16})),
 
-    fill_1x1_memcpy : make_bi_test(
-      basic_fill({w:1, h:1, r:255, g: 125, b: 16}), 
-      wasm_fill_memcpy({w:1, h:1, r:255, g: 125, b: 16})),
+    fill_1x1_memcpy : (() => {
+      const params = {w:1, h:1, r:255, g: 125, b: 16};
+      return make_bi_test(basic_fill(params), wasm_fill_memcpy(params))
+    })(),
+
     fill_8x8_memcpy : make_bi_test(
       basic_fill({w:8, h:8, r:255, g: 125, b: 16}), 
       wasm_fill_memcpy({w:8, h:8, r:255, g: 125, b: 16})),
     fill_1024x1024_memcpy : make_bi_test(
       basic_fill({w:1024, h:1024, r:255, g: 125, b: 16}), 
       wasm_fill_memcpy({w:1024, h:1024, r:255, g: 125, b: 16})),
+
+    fill_small_tri: (() => {
+      const params = {
+        w:100, h:100, r:255, g:255, b:255, 
+        x1:10, y1:10, x2:75, y2:30, x3:50, y3:75 };
+      return make_bi_test(wasm_tri(params), wasm_tri_simd(params))
+    })(),
 };
 
 if (typeof exports !== 'undefined') {

@@ -99,6 +99,14 @@ async function main() {
         module.instance.exports.many_triangles(buf, count, ptr, w, h);
     }
 
+    function tri_simd(buf, r, g, b, x0, y0, x1, y1, x2, y2) {
+        module.instance.exports.tri_simd(buf, x0, y0, x1, y1, x2, y2, r, g, b, w, h);
+    }
+
+    function many_triangles_simd(buf, count, ptr) {
+        module.instance.exports.many_triangles_simd(buf, count, ptr, w, h);
+    }
+
     function char(buf, font, char, r, g, b, x, y) {
         module.instance.exports.single_char(buf, font, char, r, g, b, x, y, w, h);
     }
@@ -151,7 +159,12 @@ async function main() {
 
     let [tri_ptr, tri_buf] = malloc_dv(count * (4 * 4 + 4 * 2 * 3));
 
+    let b = false;
+
+    //setInterval(() => { b = ! b}, 500);
+
     function loop() {
+        
         resizeCanvasToDisplaySize(canvas, zoom);
 
         const before = performance.now();
@@ -162,7 +175,7 @@ async function main() {
             for (let y = 100; y < h - 100; y+= 50) {
                 let pseudo_rand = (x * 29323948487 + y * 1223948737);
                 let pts = eq_tri_pts(x, y, 20, 
-                    curTime / 1000 + (pseudo_rand % 256));
+                    (curTime / (100 + (pseudo_rand % 1000 + 1))) + (pseudo_rand % 256));
                 let [p1x, p1y, p2x, p2y, p3x, p3y] = pts;
                 tri_buf.setUint32(i + 0, pseudo_rand & 0xffffff00, true);
 
@@ -179,7 +192,11 @@ async function main() {
             }
         }
 
-        many_triangles(buf, count, tri_ptr);
+        if (b) {
+          many_triangles(buf, count, tri_ptr);
+        } else {
+          many_triangles_simd(buf, count, tri_ptr);
+        }
 
         // quad
         quad(buf, 250, 250, 250, 20, 20, 50, 10, 100, 100, 10, 50);
