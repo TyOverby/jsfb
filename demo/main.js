@@ -2,7 +2,7 @@ const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext('2d');
 
 const w = 4096, h = 2160;
-let zoom = 3;
+let zoom = 1;
 
 observe(canvas);
 
