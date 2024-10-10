@@ -13,9 +13,6 @@
   (param $h i32) 
 
   ;; precomputed edge function
-  ;; (local $cc0a i32)
-  ;; (local $cc0b i32)
-  ;; (local $cc0c i32)
   (local $cc0av v128)
   (local $cc0av_adv v128)
   (local $cc0bv v128)
@@ -76,9 +73,9 @@
   ;; color
   (local.set $rgba 
     (call $lux/rgb2int 
-          (local.get $r) 
-          (local.get $g)
-          (local.get $b)))
+      (local.get $r) 
+      (local.get $g)
+      (local.get $b)))
 
   (local.set $rgba_4 (i32x4.splat (local.get $rgba)))
 
@@ -104,7 +101,7 @@
     (i32.sub 
       (local.get $starting_x_bytes)
       (call $lux/round_down_to_nearest_multiple_of_16 
-            (local.get $starting_x_bytes))))
+        (local.get $starting_x_bytes))))
 
   (local.set $min_x 
     (i32.sub
@@ -144,24 +141,24 @@
 
   ;; let CC0 = edgeC(v01, v00);
   (call $lux/line_func_simd
-        (local.get $v00x) (local.get $v00y) 
-        (local.get $v01x) (local.get $v01y))
+    (local.get $v00x) (local.get $v00y) 
+    (local.get $v01x) (local.get $v01y))
   (local.set $cc0cv)
   (local.set $cc0bv)
   (local.set $cc0av)
 
   ;; let CC1 = edgeC(v11, v01);
   (call $lux/line_func_simd
-        (local.get $v01x) (local.get $v01y) 
-        (local.get $v10x) (local.get $v10y))
+    (local.get $v01x) (local.get $v01y) 
+    (local.get $v10x) (local.get $v10y))
   (local.set $cc1cv)
   (local.set $cc1bv)
   (local.set $cc1av)
 
   ;; let CC2 = edgeC(v10, v11);
   (call $lux/line_func_simd
-        (local.get $v10x) (local.get $v10y) 
-        (local.get $v00x) (local.get $v00y))
+    (local.get $v10x) (local.get $v10y) 
+    (local.get $v00x) (local.get $v00y))
   (local.set $cc2cv)
   (local.set $cc2bv)
   (local.set $cc2av)
@@ -231,7 +228,6 @@
     (local.set $x (local.get $min_x))
     (local.set $cursor (local.get $cursor_y))
     (loop $x_loop
-
       #if DEBUG && CARE_ABOUT_ALIGNMENT
       (call $lux/assert (call $lux/is_multiple_of_16 (local.get $cursor)))
       #endif
@@ -335,11 +331,11 @@
       (local.set $p3y (i32.load (i32.add (local.get $ptr) (i32.const 24))))
 
       (call $lux/tri_simd (local.get $buf)
-            (local.get $p1x) (local.get $p1y) 
-            (local.get $p2x) (local.get $p2y) 
-            (local.get $p3x) (local.get $p3y)
-            (local.get $r) (local.get $g) (local.get $b)
-            (local.get $w) (local.get $h))
+        (local.get $p1x) (local.get $p1y) 
+        (local.get $p2x) (local.get $p2y) 
+        (local.get $p3x) (local.get $p3y)
+        (local.get $r) (local.get $g) (local.get $b)
+        (local.get $w) (local.get $h))
       
       (local.set $i (i32.add (local.get $i) (i32.const 1)))
       (local.set $ptr (i32.add (local.get $ptr) (i32.const 28)))

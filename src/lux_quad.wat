@@ -57,9 +57,9 @@
 
   (local.set $rgba 
     (call $lux/rgb2int 
-          (local.get $r) 
-          (local.get $g)
-          (local.get $b)))
+      (local.get $r) 
+      (local.get $g)
+      (local.get $b)))
 
   ;; let min_x = max(0, min(v00x, min(v01x, min(v10x, v11x))))
   (local.get $v00x)
@@ -111,32 +111,32 @@
 
   ;; let CC0 = edgeC(v01, v00);
   (call $lux/line_func 
-        (local.get $v00x) (local.get $v00y) 
-        (local.get $v01x) (local.get $v01y))
+    (local.get $v00x) (local.get $v00y) 
+    (local.get $v01x) (local.get $v01y))
   (local.set $cc0c)
   (local.set $cc0b)
   (local.set $cc0a)
 
   ;; let CC1 = edgeC(v11, v01);
   (call $lux/line_func 
-        (local.get $v01x) (local.get $v01y) 
-        (local.get $v10x) (local.get $v10y))
+    (local.get $v01x) (local.get $v01y) 
+    (local.get $v10x) (local.get $v10y))
   (local.set $cc1c)
   (local.set $cc1b)
   (local.set $cc1a)
 
   ;; let CC2 = edgeC(v10, v11);
   (call $lux/line_func 
-        (local.get $v10x) (local.get $v10y) 
-        (local.get $v11x) (local.get $v11y))
+    (local.get $v10x) (local.get $v10y) 
+    (local.get $v11x) (local.get $v11y))
   (local.set $cc2c)
   (local.set $cc2b)
   (local.set $cc2a)
 
   ;; let CC3 = edgeC(v00, v10);
   (call $lux/line_func 
-        (local.get $v11x) (local.get $v11y) 
-        (local.get $v00x) (local.get $v00y))
+    (local.get $v11x) (local.get $v11y) 
+    (local.get $v00x) (local.get $v00y))
   (local.set $cc3c)
   (local.set $cc3b)
   (local.set $cc3a)
@@ -216,11 +216,11 @@
       i32.or i32.or i32.or 
       (i32.eq (i32.const 0))
       (if (then (call $lux/put_pixel 
-                        (local.get $buf)
-                        (local.get $rgba)
-                        (local.get $x)
-                        (local.get $y)
-                        (local.get $w))))
+                  (local.get $buf)
+                  (local.get $rgba)
+                  (local.get $x)
+                  (local.get $y)
+                  (local.get $w))))
 
       ;; CX0 += CC0.A;
       (local.set $cx0 (i32.add (local.get $cx0) (local.get $cc0a)))

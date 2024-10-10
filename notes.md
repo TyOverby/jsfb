@@ -8,15 +8,27 @@
 - https://github.com/WebAssembly/simd/blob/main/proposals/simd/SIMD.md
 
 # Todo
-- [ ] Rename everything to "lux"
-- [ ] 
-- [ ] Allocator
+- [x] Rename everything to "lux"
+- [x] Allocator
   - [x] expose malloc/free
   - [x] all functions take image buffer
-  - [ ] store width/height in image buffer
 - [ ] Line
   - [ ] implement bounds checking
+  - [ ] thick lines
+    - [x] hardcoded for small thickness
+      - [ ] offset
+    - [ ] fallback to quad
 - [ ] Fonts
   - [ ] implement "draw_text" function
   - [ ] implement bounds checking
   - [ ] reimplement character drawing to use a font file instead of hardcoding
+- [ ] Triangles
+  - [x] simd
+  - [ ] implement bounds checking
+- [ ] Quads
+  - [ ] simd
+  - [ ] implement bounds checking
+- [ ] Testing
+  - [x] basic bisimulation test framework
+- [ ] Benching
+  - [ ] basic bisimulation comparisons

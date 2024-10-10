@@ -194,8 +194,9 @@
       i32.or i32.or
       (i32.eq (i32.const 0))
       (if (then 
-            (i32.store (local.get $cursor)
-                       (local.get $rgba))))
+            (i32.store 
+              (local.get $cursor)
+              (local.get $rgba))))
 
       ;; CX0 += CC0.A;
       (local.set $cx0 (i32.add (local.get $cx0) (local.get $cc0a)))
@@ -269,11 +270,11 @@
       (local.set $p3y (i32.load (i32.add (local.get $ptr) (i32.const 24))))
 
       (call $lux/tri (local.get $buf)
-            (local.get $p1x) (local.get $p1y) 
-            (local.get $p2x) (local.get $p2y) 
-            (local.get $p3x) (local.get $p3y)
-            (local.get $r) (local.get $g) (local.get $b)
-            (local.get $w) (local.get $h))
+        (local.get $p1x) (local.get $p1y) 
+        (local.get $p2x) (local.get $p2y) 
+        (local.get $p3x) (local.get $p3y)
+        (local.get $r) (local.get $g) (local.get $b)
+        (local.get $w) (local.get $h))
       
       (local.set $i (i32.add (local.get $i) (i32.const 1)))
       (local.set $ptr (i32.add (local.get $ptr) (i32.const 28)))

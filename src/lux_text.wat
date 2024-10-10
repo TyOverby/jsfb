@@ -85,13 +85,13 @@
       (then 
         (local.set $result_width 
           (call $lux/char_impl 
-              (local.get $buf)
-              (i32.load (i32.add (i32.const 4) (local.get $font_table)))
-              (local.get $rgba)
-              (local.get $x)
-              (local.get $y)
-              (local.get $w)
-              (local.get $h))))
+            (local.get $buf)
+            (i32.load (i32.add (i32.const 4) (local.get $font_table)))
+            (local.get $rgba)
+            (local.get $x)
+            (local.get $y)
+            (local.get $w)
+            (local.get $h))))
           (else 
      (if (i32.eq (local.get $current_code) (i32.const 0)) 
       (then nop)

@@ -252,8 +252,8 @@ async function main() {
         let delta = after - before;
         //console.log(delta);
 
-        //setTimeout(loop, 1000);
-        window.requestAnimationFrame(loop);
+        setTimeout(loop, 1000);
+        //window.requestAnimationFrame(loop);
     }
 
     window.requestAnimationFrame(loop);
