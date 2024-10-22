@@ -27,23 +27,23 @@
     ./lux.wasm.map
     -o ./lux.raw.wasm)))
 
-(rule
- (deps  (source_tree ../binaryen) lux.raw.wasm)
- (targets lux.wasm lux.wasm.map)
- (action
-  (run 
-    ../binaryen/bin/wasm-opt 
-    ./lux.raw.wasm 
-    --enable-simd --enable-bulk-memory --enable-multivalue 
-    -O4 
-    --input-source-map lux.raw.wasm.map
-    --output-source-map lux.wasm.map
-    -o lux.wasm)))
-
 ; (rule
-;  (deps  lux.raw.wasm lux.raw.wasm.map)
+;  (deps  (source_tree ../binaryen) lux.raw.wasm)
 ;  (targets lux.wasm lux.wasm.map)
 ;  (action
-;   (progn
-;    (copy lux.raw.wasm lux.wasm)
-;    (copy lux.raw.wasm.map lux.wasm.map))))
+;   (run 
+;     ../binaryen/bin/wasm-opt 
+;     ./lux.raw.wasm 
+;     --enable-simd --enable-bulk-memory --enable-multivalue 
+;     -O4 
+;     --input-source-map lux.raw.wasm.map
+;     --output-source-map lux.wasm.map
+;     -o lux.wasm)))
+
+(rule
+ (deps  lux.raw.wasm lux.raw.wasm.map)
+ (targets lux.wasm lux.wasm.map)
+ (action
+  (progn
+   (copy lux.raw.wasm lux.wasm)
+   (copy lux.raw.wasm.map lux.wasm.map))))

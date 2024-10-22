@@ -11,9 +11,11 @@
   (export "tri" (func $lux/tri))
   (export "tri_simd" (func $lux/tri_simd))
   (export "many_triangles" (func $lux/many_triangles))
+  (export "many_rectangles" (func $lux/many_rectangles))
   (export "many_triangles_simd" (func $lux/many_triangles_simd))
   (export "single_char" (func $lux/single_char))
   (export "string" (func $lux/string))
+  (export "rect" (func $lux/simd_rect))
 
   #include "./lux_utils.wat"
 
@@ -30,4 +32,6 @@
   #include "./lux_quad.wat"
 
   #include "./lux_text.wat"
+
+  #include "./lux_rect.wat"
 )

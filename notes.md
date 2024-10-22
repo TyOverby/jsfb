@@ -32,3 +32,4 @@
   - [x] basic bisimulation test framework
 - [ ] Benching
   - [ ] basic bisimulation comparisons
+- [ ] basic rect

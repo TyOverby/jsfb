@@ -99,6 +99,10 @@ async function main() {
         module.instance.exports.many_triangles(buf, count, ptr, w, h);
     }
 
+    function many_rectangles(buf, count, ptr) {
+        module.instance.exports.many_rectangles(buf, count, ptr, w, h);
+    }
+
     function tri_simd(buf, r, g, b, x0, y0, x1, y1, x2, y2) {
         module.instance.exports.tri_simd(buf, x0, y0, x1, y1, x2, y2, r, g, b, w, h);
     }
@@ -109,6 +113,10 @@ async function main() {
 
     function char(buf, font, char, r, g, b, x, y) {
         module.instance.exports.single_char(buf, font, char, r, g, b, x, y, w, h);
+    }
+
+    function rect(buf, r, g, b, min_x, min_y, rw, rh) {
+        module.instance.exports.rect(buf, r, g, b, min_x, min_y, rw, rh, w, h)
     }
 
     function string(buf, font, string, r, g, b, x, y) {
@@ -158,18 +166,18 @@ async function main() {
     }
 
     let [tri_ptr, tri_buf] = malloc_dv(count * (4 * 4 + 4 * 2 * 3));
+    let [rect_ptr, rect_buf] = malloc_dv(count * (4 * 4 + 4 * 2 * 2));
 
     let b = false;
 
     //setInterval(() => { b = ! b}, 500);
 
     function loop() {
-        
         resizeCanvasToDisplaySize(canvas, zoom);
-
         const before = performance.now();
         fillWasm(buf, 10, 50, 10);
-        let i = 0;
+        let tri_i = 0;
+        let rect_i = 0;
         const curTime = new Date().getTime();
         for (let x = 100; x < w - 100; x+= 50) {
             for (let y = 100; y < h - 100; y+= 50) {
@@ -177,24 +185,41 @@ async function main() {
                 let pts = eq_tri_pts(x, y, 20, 
                     (curTime / (100 + (pseudo_rand % 1000 + 1))) + (pseudo_rand % 256));
                 let [p1x, p1y, p2x, p2y, p3x, p3y] = pts;
-                tri_buf.setUint32(i + 0, pseudo_rand & 0xffffff00, true);
+                let rgba = pseudo_rand & 0xffffff00;
 
-                tri_buf.setUint32(i + 4, p1x, true);
-                tri_buf.setUint32(i + 8, p1y, true);
+                let min_x = Math.min(p1x, p2x, p3x);
+                let max_x = Math.max(p1x, p2x, p3x);
+                let min_y = Math.min(p1y, p2y, p3y);
+                let max_y = Math.max(p1y, p2y, p3y);
 
-                tri_buf.setUint32(i + 12, p2x, true);
-                tri_buf.setUint32(i + 16, p2y, true);
+                tri_buf.setUint32(tri_i + 0, rgba, true);
+                rect_buf.setUint32(rect_i + 0, ~rgba, true);
 
-                tri_buf.setUint32(i + 20, p3x, true);
-                tri_buf.setUint32(i + 24, p3y, true);
+                tri_buf.setUint32(tri_i + 4, p1x, true);
+                tri_buf.setUint32(tri_i + 8, p1y, true);
 
-                i += 28;
+                rect_buf.setUint32(rect_i + 4, min_x, true);
+                rect_buf.setUint32(rect_i + 8, min_y, true);
+
+                tri_buf.setUint32(tri_i + 12, p2x, true);
+                tri_buf.setUint32(tri_i + 16, p2y, true);
+
+                rect_buf.setUint32(rect_i + 12, max_x - min_x, true);
+                rect_buf.setUint32(rect_i + 16, max_y - min_y, true);
+
+                tri_buf.setUint32(tri_i + 20, p3x, true);
+                tri_buf.setUint32(tri_i + 24, p3y, true);
+
+                tri_i += 28;
+                rect_i += 20;
             }
         }
 
         if (b) {
-          many_triangles(buf, count, tri_ptr);
+          //many_triangles(buf, count, tri_ptr);
+          many_rectangles(buf, count, rect_ptr);
         } else {
+          many_rectangles(buf, count, rect_ptr);
           many_triangles_simd(buf, count, tri_ptr);
         }
 
@@ -252,8 +277,8 @@ async function main() {
         let delta = after - before;
         //console.log(delta);
 
-        setTimeout(loop, 1000);
-        //window.requestAnimationFrame(loop);
+        //setTimeout(loop, 1000);
+        window.requestAnimationFrame(loop);
     }
 
     window.requestAnimationFrame(loop);
