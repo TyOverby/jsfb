@@ -19,7 +19,7 @@
       - [ ] offset
     - [ ] fallback to quad
 - [ ] Fonts
-  - [ ] implement "draw_text" function
+  - [x] implement "draw_text" function
   - [ ] implement bounds checking
   - [ ] reimplement character drawing to use a font file instead of hardcoding
 - [ ] Triangles
