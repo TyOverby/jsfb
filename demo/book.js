@@ -10,7 +10,8 @@ let zoom = 1;
 
 observe(canvas);
 
-let img_data_offset = 0;
+let img_data_offset_x = 0;
+let img_data_offset_y = 0;
 
 async function main() {
     const walloc = await WebAssembly.instantiateStreaming(fetch("walloc.wasm"), {});
@@ -215,11 +216,8 @@ async function main() {
         const img_buffer = new ImageData(uint8_array, w, h);
         window.img_buffer = img_buffer;
 
-        ctx.putImageData(img_buffer, img_data_offset, 0, 0, 0, w, h);
-        img_data_offset -= 50;
-        if (img_data_offset < -2000) {
-          //img_data_offset = 0
-        }
+        ctx.putImageData(img_buffer, img_data_offset_x, img_data_offset_y, 0, 0, w, h);
+        //img_data_offset -= 50;
         let after = performance.now();
         let delta = after - before;
         //console.log(delta);
@@ -231,3 +229,38 @@ async function main() {
     window.requestAnimationFrame(loop);
 }
 main()
+
+let prev_x, prev_y;
+
+function on_move(e) {
+  const dx = e.x - prev_x;
+  const dy = e.y - prev_y;
+
+  prev_x = e.x;
+  prev_y = e.y;
+
+  img_data_offset_x += dx * devicePixelRatio;
+  img_data_offset_y += dy * devicePixelRatio;
+
+  img_data_offset_x = Math.min(0, img_data_offset_x);
+  img_data_offset_x = Math.max(canvas.width - w, img_data_offset_x);
+
+  img_data_offset_y = Math.min(0, img_data_offset_y);
+  img_data_offset_y = Math.max(canvas.height - h, img_data_offset_y);
+}
+
+
+function on_down(e) {
+  canvas.addEventListener("pointermove", on_move)
+  canvas.setPointerCapture(e.pointerId);
+  prev_x = e.x;
+  prev_y = e.y;
+
+  canvas.addEventListener("pointerup", function() {
+    canvas.removeEventListener("pointerup", on_down);
+    canvas.removeEventListener("pointermove", on_move);
+    canvas.releasePointerCapture(e.pointerId);
+  });
+}
+
+canvas.addEventListener("pointerdown", on_down);
