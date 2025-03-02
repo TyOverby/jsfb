@@ -335,3 +335,93 @@
             (local.get $x1)
             (local.get $y1)
             (local.get $w)))))))
+
+(func $lux/h_line
+  (param $buf i32)
+  (param $r i32) 
+  (param $g i32) 
+  (param $b i32) 
+  (param $x i32) 
+  (param $y i32) 
+  (param $len i32) 
+  (param $w i32) 
+  (param $h i32) 
+
+  (local $cursor i32)
+  (local $rgba i32)
+
+  (local.set $rgba 
+    (call $lux/rgb2int 
+      (local.get $r) 
+      (local.get $g)
+      (local.get $b)))
+
+  (if (i32.lt_s (local.get $x) (i32.const 0))
+    (then 
+      (local.set $len (i32.sub (local.get $len) (local.get $x)))
+      (local.set $x (i32.const 0))))
+
+  (if (i32.gt_u (local.get $y) (local.get $h))
+    (then return))
+
+  (i32.mul (local.get $y) (local.get $w))
+  (i32.add (local.get $x))
+  (i32.mul (i32.const 4))
+  (i32.add (local.get $buf))
+  (local.set $cursor)
+
+  (block $exit_loop 
+    (loop $loop 
+      (if (i32.le_s (local.get $len) (i32.const 0))
+        (then (br $exit_loop)))
+
+      (i32.store (local.get $cursor) (local.get $rgba))
+
+      (local.set $cursor (i32.add (local.get $cursor) (i32.const 4)))
+      (local.set $len (i32.sub (local.get $len) (i32.const 1)))
+      (br $loop))))
+
+(func $lux/v_line
+  (param $buf i32)
+  (param $r i32) 
+  (param $g i32) 
+  (param $b i32) 
+  (param $x i32) 
+  (param $y i32) 
+  (param $len i32) 
+  (param $w i32) 
+  (param $h i32) 
+
+  (local $cursor i32)
+  (local $rgba i32)
+
+  (local.set $rgba 
+    (call $lux/rgb2int 
+      (local.get $r) 
+      (local.get $g)
+      (local.get $b)))
+
+  (if (i32.lt_s (local.get $y) (i32.const 0))
+    (then 
+      (local.set $len (i32.sub (local.get $len) (local.get $y)))
+      (local.set $y (i32.const 0))))
+
+  (if (i32.gt_u (local.get $x) (local.get $w))
+    (then return))
+
+  (i32.mul (local.get $y) (local.get $w))
+  (i32.add (local.get $x))
+  (i32.mul (i32.const 4))
+  (i32.add (local.get $buf))
+  (local.set $cursor)
+
+  (block $exit_loop 
+    (loop $loop 
+      (if (i32.le_s (local.get $len) (i32.const 0))
+        (then (br $exit_loop)))
+
+      (i32.store (local.get $cursor) (local.get $rgba))
+
+      (local.set $cursor (i32.add (local.get $cursor) (i32.mul (i32.const 4)(local.get $w))))
+      (local.set $len (i32.sub (local.get $len) (i32.const 1)))
+      (br $loop))))

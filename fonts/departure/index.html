@@ -17,7 +17,7 @@
     body { margin: 0; }
   </style>
 
-  <script src="../canvas-resizer.js"> </script>
+  <script src="./canvas-resizer.js"> </script>
 </head>
 <body>
   <canvas id="myCanvas" width="500" height="200"></canvas>
@@ -27,7 +27,6 @@
     observe(myCanvas);
 
     var idx = 97;
-
 
     document.fonts.load('11pt "departure"').then(function() {
       var canvas = document.getElementById('myCanvas');
@@ -58,7 +57,7 @@
 
       
       function loop() {
-        resizeCanvasToDisplaySize(myCanvas);
+        resizeCanvasToDisplaySize(myCanvas, 1);
         ctx.clearRect(0,0, myCanvas.width,myCanvas.height);
 
         const mult = 50;
@@ -114,7 +113,7 @@
 
       //window.requestAnimationFrame(loop);
 
-      for (let char of "abcdefghijklmnopqrstuvwxyz") {
+      for (let char of "abcdefghijklmnopqrstuvwxyz1234567890.") {
         idx = char.charCodeAt(0);
         loop();
       }

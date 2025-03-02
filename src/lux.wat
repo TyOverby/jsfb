@@ -1,3 +1,5 @@
+#define $(X) (local.get $ ## X )
+
 (module
   (import "runtime" "memory" (memory $0 0))
   (export "put_pixel_raw" (func $lux/put_pixel_raw))
@@ -7,6 +9,8 @@
   (export "fill_simd" (func $lux/fill_simd))
   (export "fill_memcpy" (func $lux/fill_memcpy))
   (export "line" (func $lux/line))
+  (export "h_line" (func $lux/h_line))
+  (export "v_line" (func $lux/v_line))
   (export "quad" (func $lux/quad))
   (export "tri" (func $lux/tri))
   (export "tri_simd" (func $lux/tri_simd))
@@ -15,6 +19,7 @@
   (export "many_triangles_simd" (func $lux/many_triangles_simd))
   (export "single_char" (func $lux/single_char))
   (export "string" (func $lux/string))
+  (export "basic_rect" (func $lux/basic_rect))
   (export "rect" (func $lux/simd_rect))
 
   #include "./lux_utils.wat"

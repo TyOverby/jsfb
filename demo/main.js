@@ -119,6 +119,18 @@ async function main() {
         module.instance.exports.rect(buf, r, g, b, min_x, min_y, rw, rh, w, h)
     }
 
+    function basic_rect(buf, r, g, b, min_x, min_y, rw, rh) {
+        module.instance.exports.basic_rect(buf, r, g, b, min_x, min_y, rw, rh, w, h)
+    }
+
+    function h_line(buf, r, g, b, x, y, len) {
+        module.instance.exports.h_line(buf, r, g, b, x, y, len, w, h)
+    }
+
+    function v_line(buf, r, g, b, x, y, len) {
+        module.instance.exports.v_line(buf, r, g, b, x, y, len, w, h)
+    }
+
     function string(buf, font, string, r, g, b, x, y) {
         module.instance.exports.string(buf, font, string, r, g, b, x, y, w, h);
     }
@@ -170,48 +182,54 @@ async function main() {
 
     let b = false;
 
-    //setInterval(() => { b = ! b}, 500);
+    let last_frame_delta = 0.0;
 
     function loop() {
         resizeCanvasToDisplaySize(canvas, zoom);
         const before = performance.now();
-        fillWasm(buf, 10, 50, 10);
-        let tri_i = 0;
-        let rect_i = 0;
-        const curTime = new Date().getTime();
-        for (let x = 100; x < w - 100; x+= 50) {
-            for (let y = 100; y < h - 100; y+= 50) {
-                let pseudo_rand = (x * 29323948487 + y * 1223948737);
-                let pts = eq_tri_pts(x, y, 20, 
-                    (curTime / (100 + (pseudo_rand % 1000 + 1))) + (pseudo_rand % 256));
-                let [p1x, p1y, p2x, p2y, p3x, p3y] = pts;
-                let rgba = pseudo_rand & 0xffffff00;
+        
+        { // clear screen
+            fillWasm(buf, 10, 50, 10);
+        }
 
-                let min_x = Math.min(p1x, p2x, p3x);
-                let max_x = Math.max(p1x, p2x, p3x);
-                let min_y = Math.min(p1y, p2y, p3y);
-                let max_y = Math.max(p1y, p2y, p3y);
+        { // field of triangles
+            let tri_i = 0;
+            let rect_i = 0;
+            const curTime = new Date().getTime();
+            for (let x = 100; x < w - 100; x+= 50) {
+                for (let y = 100; y < h - 100; y+= 50) {
+                    let pseudo_rand = (x * 29323948487 + y * 1223948737);
+                    let pts = eq_tri_pts(x, y, 20, 
+                        (curTime / (100 + (pseudo_rand % 1000 + 1))) + (pseudo_rand % 256));
+                    let [p1x, p1y, p2x, p2y, p3x, p3y] = pts;
+                    let rgba = pseudo_rand & 0xffffff00;
 
-                tri_buf.setUint32(tri_i + 0, rgba, true);
-                rect_buf.setUint32(rect_i + 0, ~rgba, true);
+                    let min_x = Math.min(p1x, p2x, p3x);
+                    let max_x = Math.max(p1x, p2x, p3x);
+                    let min_y = Math.min(p1y, p2y, p3y);
+                    let max_y = Math.max(p1y, p2y, p3y);
 
-                tri_buf.setUint32(tri_i + 4, p1x, true);
-                tri_buf.setUint32(tri_i + 8, p1y, true);
+                    tri_buf.setUint32(tri_i + 0, rgba, true);
+                    rect_buf.setUint32(rect_i + 0, ~rgba, true);
 
-                rect_buf.setUint32(rect_i + 4, min_x, true);
-                rect_buf.setUint32(rect_i + 8, min_y, true);
+                    tri_buf.setUint32(tri_i + 4, p1x, true);
+                    tri_buf.setUint32(tri_i + 8, p1y, true);
 
-                tri_buf.setUint32(tri_i + 12, p2x, true);
-                tri_buf.setUint32(tri_i + 16, p2y, true);
+                    rect_buf.setUint32(rect_i + 4, min_x, true);
+                    rect_buf.setUint32(rect_i + 8, min_y, true);
 
-                rect_buf.setUint32(rect_i + 12, max_x - min_x, true);
-                rect_buf.setUint32(rect_i + 16, max_y - min_y, true);
+                    tri_buf.setUint32(tri_i + 12, p2x, true);
+                    tri_buf.setUint32(tri_i + 16, p2y, true);
 
-                tri_buf.setUint32(tri_i + 20, p3x, true);
-                tri_buf.setUint32(tri_i + 24, p3y, true);
+                    rect_buf.setUint32(rect_i + 12, max_x - min_x, true);
+                    rect_buf.setUint32(rect_i + 16, max_y - min_y, true);
 
-                tri_i += 28;
-                rect_i += 20;
+                    tri_buf.setUint32(tri_i + 20, p3x, true);
+                    tri_buf.setUint32(tri_i + 24, p3y, true);
+
+                    tri_i += 28;
+                    rect_i += 20;
+                }
             }
         }
 
@@ -223,62 +241,124 @@ async function main() {
           many_triangles_simd(buf, count, tri_ptr);
         }
 
-        // quad
-        quad(buf, 250, 250, 250, 20, 20, 50, 10, 100, 100, 10, 50);
-        quad(buf, 250, 0, 250, 0, 100, 100, 100, 100, 200, 0, 200);
-        quad(buf, 0, 0, 250, 100, 100, 200, 100, 200, 200, 100, 200);
-
-        // tri
-        tri(buf, 150, 150, 250, 100, 20, 200, 20, 150, 100);
-
-        // star burst
-        for (var theta = 0; theta < 2 * Math.PI; theta += (Math.PI / 10)) {
-            let cx = 100, cy = 100;
-            let dx = cx + 50 * Math.cos(theta), dy = cy + 50 * Math.sin(theta);
-            line(buf, 255, 250, 100, cx, cy, dx, dy);
+        { // quads
+            // Weird white quad in top-left corner
+            quad(buf, 250, 250, 250, 20, 20, 50, 10, 100, 100, 10, 50);
+            // Pink square
+            quad(buf, 250, 0, 250, 0, 100, 100, 100, 100, 200, 0, 200);
+            // Blue rectangle
+            quad(buf, 0, 0, 250, 100, 100, 300, 100, 300, 200, 100, 200);
         }
 
-        // sin wave
-        var prev_x = 100;
-        var prev_y = 200 + 50 * Math.cos(10);
-        for (var x = 100; x < 300; x++) {
-            var y = 200 + (50 * Math.cos(x / 10));
-            line(buf, 255, 250, 100, prev_x, prev_y, x, y);
-            prev_x = x;
-            prev_y = y;
+        { // lavendar upside down triangle
+            tri(buf, 150, 150, 250, 100, 20, 200, 20, 150, 100);
         }
 
-        // white rectangle for drawing text to
-        quad(buf, 255, 255, 255, 0, 250, 250, 250, 250, 500, 0, 500);
-
-        // alphabet
-        for (let i = 0; i < 26; i++) {
-            char(buf, font, 97 + i, 0, 0, 0, 4 + (i * 8 * 2), 300);
+        { // yellow star burst
+            for (var theta = 0; theta < 2 * Math.PI; theta += (Math.PI / 10)) {
+                let cx = 100, cy = 100;
+                let dx = cx + 50 * Math.cos(theta), dy = cy + 50 * Math.sin(theta);
+                line(buf, 255, 250, 100, cx, cy, dx, dy);
+            }
         }
 
-        // string
-        const s = "hello\nworld"
-        const [string_ptr, string_dv] = malloc_dv((s.length + 1) * 2);
-        string_dv.setUint16(s.length, 0, true);
-        for (let i = 0; i < s.length; i++) {
-            string_dv.setUint16(i * 2, s.charCodeAt(i), true);
+        { // yellow sin wave
+            var prev_x = 100;
+            var prev_y = 200 + 50 * Math.cos(10);
+            for (var x = 100; x < 300; x++) {
+                var y = 200 + (50 * Math.cos(x / 10));
+                line(buf, 255, 250, 100, prev_x, prev_y, x, y);
+                prev_x = x;
+                prev_y = y;
+            }
         }
-        string(buf, font, string_ptr, 0,0,0, 4, 400);
-        free(string_ptr);
 
 
-        const uint8_array = new Uint8ClampedArray(walloc.instance.exports.memory.buffer, buf, buf_size);
-        window.uint8 = uint8_array;
-        const img_buffer = new ImageData(uint8_array, w, h);
-        window.img_buffer = img_buffer;
+        { // alphabet
+            // white rectangle for drawing text on top of
+            quad(buf, 255, 255, 255, 0, 250, 250, 250, 250, 500, 0, 500);
 
-        ctx.putImageData(img_buffer, 0, 0, 0, 0, w, h);
-        let after = performance.now();
-        let delta = after - before;
-        //console.log(delta);
+            for (let i = 0; i < 26; i++) {
+                char(buf, font, 97 + i, 0, 0, 0, 4 + (i * 8 * 2), 300);
+            }
+        }
 
-        //setTimeout(loop, 1000);
+        { // string
+            const s = "hello\nworld\na1b2c3"
+            const [string_ptr, string_dv] = malloc_dv((s.length + 1) * 2);
+            string_dv.setUint16(s.length * 2, 0, true);
+            for (let i = 0; i < s.length; i++) {
+                string_dv.setUint16(i * 2, s.charCodeAt(i), true);
+            }
+            string(buf, font, string_ptr, 0,0,0, 4, 400);
+            free(string_ptr);
+        }
+
+        { // small thing in the corner
+            basic_rect(buf, 255, 0, 0, 1, 1, 3, 3);
+            h_line(buf, 0, 255, 0, 1, 2, 3);
+            v_line(buf, 0, 0, 255, 2, 1, 3);
+        }
+
+        { // fps counter
+            const last_frame_fps = Math.ceil(1 / (last_frame_delta / 1000));
+            const s = "" + last_frame_fps;
+            let width = s.length * 14;
+            let height = 20;
+            let x_offset = canvas.width - width - 8;
+
+            quad(buf, 200, 50, 50, x_offset, 0, 8 + width + x_offset, 0, 8 + width + x_offset, 4 + height, x_offset, 4 + height);
+
+            const [string_ptr, string_dv] = malloc_dv((s.length + 1) * 2);
+
+            for (let i = 0; i < s.length; i++) {
+                string_dv.setUint16(i * 2, s.charCodeAt(i), true);
+            }
+
+            string_dv.setUint16(s.length * 2, 0, true);
+
+            string(buf, font, string_ptr, 255, 255, 255, 4 + x_offset, 4);
+            free(string_ptr);
+        }
+
+        { // frame duration counter
+            const s = last_frame_delta.toFixed(2);
+            let width = s.length * 14;
+            let height = 20;
+            let x_offset = canvas.width - width - 8;
+            let y_offset = height + 4;
+
+            quad(buf, 200, 50, 50, x_offset, y_offset, 8 + width + x_offset, y_offset, 8 + width + x_offset, 4 + height + y_offset, x_offset, 4 + height + y_offset);
+
+            const [string_ptr, string_dv] = malloc_dv((s.length + 1) * 2);
+
+            for (let i = 0; i < s.length; i++) {
+                string_dv.setUint16(i * 2, s.charCodeAt(i), true);
+            }
+
+            string_dv.setUint16(s.length * 2, 0, true);
+
+            string(buf, font, string_ptr, 255, 255, 255, 4 + x_offset, 4 + y_offset);
+            free(string_ptr);
+        }
+
+        { // actually draw to canvas 
+            const uint8_array = new Uint8ClampedArray(walloc.instance.exports.memory.buffer, buf, buf_size);
+            window.uint8 = uint8_array;
+            const img_buffer = new ImageData(uint8_array, w, h);
+            window.img_buffer = img_buffer;
+            ctx.putImageData(img_buffer, 0, 0, 0, 0, w, h);
+        }
+
+        { // set fps for next frame 
+            let after = performance.now();
+            let delta = after - before;
+            // console.log(delta);
+            last_frame_delta = delta;
+        }
+
         window.requestAnimationFrame(loop);
+        //setTimeout(loop,0);
     }
 
     window.requestAnimationFrame(loop);

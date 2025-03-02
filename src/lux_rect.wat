@@ -24,7 +24,7 @@
   (local.set $i (i32.const 0))
   (local.set $k (i32.const 0))
 
-  (i32.add (local.get $min_x) (local.get $w))
+  (i32.add $(min_x) (local.get $w))
   (call $lux/min32s (local.get $buf_w))
   (local.set $max_x)
 
@@ -196,7 +196,6 @@
   (local $r i32)
   (local $g i32)
   (local $b i32)
-
 
   (local $px i32)
   (local $py i32)

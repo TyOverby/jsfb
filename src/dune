@@ -6,7 +6,7 @@
  (action
   (setenv DEBUG 0
   (setenv CARE_ABOUT_ALIGNMENT 0
-   (bash "cpp -DDEBUG=$DEBUG -DCARE_ABOUT_ALIGNMENT=$CARE_ABOUT_ALIGNMENT lux.wat | sed 's/^#/;; #/' > %{target}")))))
+   (bash "cpp-14 -DDEBUG=$DEBUG -DCARE_ABOUT_ALIGNMENT=$CARE_ABOUT_ALIGNMENT lux.wat | sed 's/^#/;; #/' > %{target}")))))
 
 (rule
  (deps
@@ -27,23 +27,24 @@
     ./lux.wasm.map
     -o ./lux.raw.wasm)))
 
+ (rule
+  (deps  (source_tree ../binaryen) lux.raw.wasm)
+  (targets lux.wasm lux.wasm.map)
+  (action
+   (run 
+     ../binaryen/bin/wasm-opt 
+     ./lux.raw.wasm 
+     --enable-simd --enable-bulk-memory --enable-multivalue 
+     --traps-never-happen --zero-filled-memory
+     -O4 
+     --input-source-map lux.raw.wasm.map
+     --output-source-map lux.wasm.map
+     -o lux.wasm)))
+
 ; (rule
-;  (deps  (source_tree ../binaryen) lux.raw.wasm)
+;  (deps  lux.raw.wasm lux.raw.wasm.map)
 ;  (targets lux.wasm lux.wasm.map)
 ;  (action
-;   (run 
-;     ../binaryen/bin/wasm-opt 
-;     ./lux.raw.wasm 
-;     --enable-simd --enable-bulk-memory --enable-multivalue 
-;     -O4 
-;     --input-source-map lux.raw.wasm.map
-;     --output-source-map lux.wasm.map
-;     -o lux.wasm)))
-
-(rule
- (deps  lux.raw.wasm lux.raw.wasm.map)
- (targets lux.wasm lux.wasm.map)
- (action
-  (progn
-   (copy lux.raw.wasm lux.wasm)
-   (copy lux.raw.wasm.map lux.wasm.map))))
+;   (progn
+;    (copy lux.raw.wasm lux.wasm)
+;    (copy lux.raw.wasm.map lux.wasm.map))))
