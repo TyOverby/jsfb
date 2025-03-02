@@ -53,13 +53,13 @@
   (local $cursor i32)
   (local $w_4 i32)
 
-  (local.set $w_4 (i32.mul (i32.const 4) (local.get $w)))
+  (local.set $w_4 (i32.mul (i32.const 4) $(w)))
 
   (local.set $rgba 
     (call $lux/rgb2int 
-          (local.get $r) 
-          (local.get $g)
-          (local.get $b)))
+          $(r) 
+          $(g)
+          $(b)))
 
   ;; let min_x = max(0, min(v00x, min(v01x, min(v10x, v11x))))
   (local.get $v00x)
@@ -87,7 +87,7 @@
   (local.get $v10x)
   (call $lux/max32s)
   (call $lux/max32s)
-  (local.get $w)
+  $(w)
   (call $lux/min32s)
   (local.set $max_x)
 
@@ -97,7 +97,7 @@
   (local.get $v10y)
   (call $lux/max32s)
   (call $lux/max32s)
-  (local.get $h)
+  $(h)
   (call $lux/min32s)
   (local.set $max_y)
 
@@ -127,10 +127,10 @@
   (local.set $cc2a)
 
   ;; var CY0 = boundRectMin.x * CC0.A + boundRectMin.y * CC0.B + CC0.C;
-  (local.get $min_x)
+  $(min_x)
   (local.get $cc0a)
   i32.mul
-  (local.get $min_y)
+  $(min_y)
   (local.get $cc0b)
   i32.mul
   (local.get $cc0c)
@@ -139,10 +139,10 @@
   (local.set $cy0)
 
   ;; var CY1 = boundRectMin.x * CC1.A + boundRectMin.y * CC1.B + CC1.C;
-  (local.get $min_x)
+  $(min_x)
   (local.get $cc1a)
   i32.mul
-  (local.get $min_y)
+  $(min_y)
   (local.get $cc1b)
   i32.mul
   (local.get $cc1c)
@@ -151,10 +151,10 @@
   (local.set $cy1)
 
   ;; var CY2 = boundRectMin.x * CC2.A + boundRectMin.y * CC2.B + CC2.C;
-  (local.get $min_x)
+  $(min_x)
   (local.get $cc2a)
   i32.mul
-  (local.get $min_y)
+  $(min_y)
   (local.get $cc2b)
   i32.mul
   (local.get $cc2c)
@@ -163,16 +163,16 @@
   (local.set $cy2)
 
   ;; for (var y: f32 = boundRectMin.y; y < boundRectMax.y; y += 1.0) {
-  (local.set $x (local.get $min_x))
-  (local.set $y (local.get $min_y))
+  (local.set $x $(min_x))
+  (local.set $y $(min_y))
 
   ;; setting up pixel locations
-  (i32.mul (local.get $w) (local.get $y))
-  (i32.add (local.get $x))
+  (i32.mul $(w) $(y))
+  (i32.add $(x))
   (i32.mul (i32.const 4))
-  (i32.add (local.get $buf))
+  (i32.add $(buf))
   (local.set $cursor_y)
-  (local.set $cursor (local.get $cursor_y))
+  (local.set $cursor $(cursor_y))
 
   (loop $y_loop
     ;; var CX0 = CY0;
@@ -183,8 +183,8 @@
     (local.set $cx2 (local.get $cy2))
 
     ;; for (var x: f32 = boundRectMin.x; x < boundRectMax.x; x += 1.0) {
-    (local.set $x (local.get $min_x))
-    (local.set $cursor (local.get $cursor_y))
+    (local.set $x $(min_x))
+    (local.set $cursor $(cursor_y))
     (loop $x_loop
       ;; if (CX0 >= 0 || CX1 >= 0 || CX2 >= 0 || CX3 >= 0) {
       ;; NOTE: ^ Ive inverted this check to match my intuition
@@ -195,8 +195,8 @@
       (i32.eq (i32.const 0))
       (if (then 
             (i32.store 
-              (local.get $cursor)
-              (local.get $rgba))))
+              $(cursor)
+              $(rgba))))
 
       ;; CX0 += CC0.A;
       (local.set $cx0 (i32.add (local.get $cx0) (local.get $cc0a)))
@@ -206,9 +206,9 @@
       (local.set $cx2 (i32.add (local.get $cx2) (local.get $cc2a)))
       
       ;; loop trailer
-      (local.set $x (i32.add (i32.const 1) (local.get $x)))
-      (local.set $cursor (i32.add (i32.const 4) (local.get $cursor)))
-      (if (i32.le_u (local.get $x) (local.get $max_x))
+      (local.set $x (i32.add (i32.const 1) $(x)))
+      (local.set $cursor (i32.add (i32.const 4) $(cursor)))
+      (if (i32.le_u $(x) $(max_x))
         (then (br $x_loop))))
 
     ;; CY0 += CC0.B;
@@ -219,9 +219,9 @@
     (local.set $cy2 (i32.add (local.get $cy2) (local.get $cc2b)))
     
     ;; loop trailer
-    (local.set $y (i32.add (i32.const 1) (local.get $y)))
-    (local.set $cursor_y (i32.add (local.get $w_4) (local.get $cursor_y)))
-    (if (i32.le_u (local.get $y) (local.get $max_y))
+    (local.set $y (i32.add (i32.const 1) $(y)))
+    (local.set $cursor_y (i32.add (local.get $w_4) $(cursor_y)))
+    (if (i32.le_u $(y) $(max_y))
       (then (br $y_loop)))))
 
 (func $lux/many_triangles
@@ -251,31 +251,31 @@
 
   (block $leave_loop
     (loop $continue_loop
-      (if (i32.eq (local.get $i) (local.get $count))
+      (if (i32.eq $(i) $(count))
          (then (br $leave_loop)))
       
       ;; TODO: make a version of tri that takes rgba as a single int
-      (local.set $rgba (i32.load (i32.add (local.get $ptr) (i32.const 0))))
-      (local.set $b (i32.and (i32.shr_u (local.get $rgba) (i32.const 8))  (i32.const 0xFF)))
-      (local.set $g (i32.and (i32.shr_u (local.get $rgba) (i32.const 16))  (i32.const 0xFF)))
-      (local.set $r (i32.and (i32.shr_u (local.get $rgba) (i32.const 24)) (i32.const 0xFF)))
+      (local.set $rgba (i32.load (i32.add $(ptr) (i32.const 0))))
+      (local.set $b (i32.and (i32.shr_u $(rgba) (i32.const 8))  (i32.const 0xFF)))
+      (local.set $g (i32.and (i32.shr_u $(rgba) (i32.const 16))  (i32.const 0xFF)))
+      (local.set $r (i32.and (i32.shr_u $(rgba) (i32.const 24)) (i32.const 0xFF)))
 
-      (local.set $p1x (i32.load (i32.add (local.get $ptr) (i32.const 4))))
-      (local.set $p1y (i32.load (i32.add (local.get $ptr) (i32.const 8))))
+      (local.set $p1x (i32.load (i32.add $(ptr) (i32.const 4))))
+      (local.set $p1y (i32.load (i32.add $(ptr) (i32.const 8))))
 
-      (local.set $p2x (i32.load (i32.add (local.get $ptr) (i32.const 12))))
-      (local.set $p2y (i32.load (i32.add (local.get $ptr) (i32.const 16))))
+      (local.set $p2x (i32.load (i32.add $(ptr) (i32.const 12))))
+      (local.set $p2y (i32.load (i32.add $(ptr) (i32.const 16))))
 
-      (local.set $p3x (i32.load (i32.add (local.get $ptr) (i32.const 20))))
-      (local.set $p3y (i32.load (i32.add (local.get $ptr) (i32.const 24))))
+      (local.set $p3x (i32.load (i32.add $(ptr) (i32.const 20))))
+      (local.set $p3y (i32.load (i32.add $(ptr) (i32.const 24))))
 
-      (call $lux/tri (local.get $buf)
+      (call $lux/tri $(buf)
         (local.get $p1x) (local.get $p1y) 
         (local.get $p2x) (local.get $p2y) 
         (local.get $p3x) (local.get $p3y)
-        (local.get $r) (local.get $g) (local.get $b)
-        (local.get $w) (local.get $h))
+        $(r) $(g) $(b)
+        $(w) $(h))
       
-      (local.set $i (i32.add (local.get $i) (i32.const 1)))
-      (local.set $ptr (i32.add (local.get $ptr) (i32.const 28)))
+      (local.set $i (i32.add $(i) (i32.const 1)))
+      (local.set $ptr (i32.add $(ptr) (i32.const 28)))
       (br $continue_loop))))

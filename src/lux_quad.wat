@@ -57,9 +57,9 @@
 
   (local.set $rgba 
     (call $lux/rgb2int 
-      (local.get $r) 
-      (local.get $g)
-      (local.get $b)))
+      $(r) 
+      $(g)
+      $(b)))
 
   ;; let min_x = max(0, min(v00x, min(v01x, min(v10x, v11x))))
   (local.get $v00x)
@@ -93,7 +93,7 @@
   (call $lux/max32s)
   (call $lux/max32s)
   (call $lux/max32s)
-  (local.get $w)
+  $(w)
   (call $lux/min32s)
   (local.set $max_x)
 
@@ -105,7 +105,7 @@
   (call $lux/max32s)
   (call $lux/max32s)
   (call $lux/max32s)
-  (local.get $h)
+  $(h)
   (call $lux/min32s)
   (local.set $max_y)
 
@@ -142,10 +142,10 @@
   (local.set $cc3a)
 
   ;; var CY0 = boundRectMin.x * CC0.A + boundRectMin.y * CC0.B + CC0.C;
-  (local.get $min_x)
+  $(min_x)
   (local.get $cc0a)
   i32.mul
-  (local.get $min_y)
+  $(min_y)
   (local.get $cc0b)
   i32.mul
   (local.get $cc0c)
@@ -154,10 +154,10 @@
   (local.set $cy0)
 
   ;; var CY1 = boundRectMin.x * CC1.A + boundRectMin.y * CC1.B + CC1.C;
-  (local.get $min_x)
+  $(min_x)
   (local.get $cc1a)
   i32.mul
-  (local.get $min_y)
+  $(min_y)
   (local.get $cc1b)
   i32.mul
   (local.get $cc1c)
@@ -166,10 +166,10 @@
   (local.set $cy1)
 
   ;; var CY2 = boundRectMin.x * CC2.A + boundRectMin.y * CC2.B + CC2.C;
-  (local.get $min_x)
+  $(min_x)
   (local.get $cc2a)
   i32.mul
-  (local.get $min_y)
+  $(min_y)
   (local.get $cc2b)
   i32.mul
   (local.get $cc2c)
@@ -178,10 +178,10 @@
   (local.set $cy2)
 
   ;; var CY3 = boundRectMin.x * CC3.A + boundRectMin.y * CC3.B + CC3.C;
-  (local.get $min_x)
+  $(min_x)
   (local.get $cc3a)
   i32.mul
-  (local.get $min_y)
+  $(min_y)
   (local.get $cc3b)
   i32.mul
   (local.get $cc3c)
@@ -190,7 +190,7 @@
   (local.set $cy3)
 
   ;; for (var y: f32 = boundRectMin.y; y < boundRectMax.y; y += 1.0) {
-  (local.set $y (local.get $min_y))
+  (local.set $y $(min_y))
   (loop $y_loop
     ;; var CX0 = CY0;
     (local.set $cx0 (local.get $cy0))
@@ -205,7 +205,7 @@
     (local.set $cx3 (local.get $cy3))
 
     ;; for (var x: f32 = boundRectMin.x; x < boundRectMax.x; x += 1.0) {
-    (local.set $x (local.get $min_x))
+    (local.set $x $(min_x))
     (loop $x_loop
       ;; if (CX0 >= 0 || CX1 >= 0 || CX2 >= 0 || CX3 >= 0) {
       ;; NOTE: ^ Ive inverted this check to match my intuition
@@ -216,11 +216,11 @@
       i32.or i32.or i32.or 
       (i32.eq (i32.const 0))
       (if (then (call $lux/put_pixel 
-                  (local.get $buf)
-                  (local.get $rgba)
-                  (local.get $x)
-                  (local.get $y)
-                  (local.get $w))))
+                  $(buf)
+                  $(rgba)
+                  $(x)
+                  $(y)
+                  $(w))))
 
       ;; CX0 += CC0.A;
       (local.set $cx0 (i32.add (local.get $cx0) (local.get $cc0a)))
@@ -232,8 +232,8 @@
       (local.set $cx3 (i32.add (local.get $cx3) (local.get $cc3a)))
       
       ;; loop trailer
-      (local.set $x (i32.add (i32.const 1) (local.get $x)))
-      (if (i32.lt_u (local.get $x) (local.get $max_x))
+      (local.set $x (i32.add (i32.const 1) $(x)))
+      (if (i32.lt_u $(x) $(max_x))
         (then (br $x_loop))))
 
     ;; CY0 += CC0.B;
@@ -246,6 +246,6 @@
     (local.set $cy3 (i32.add (local.get $cy3) (local.get $cc3b)))
     
     ;; loop trailer
-    (local.set $y (i32.add (i32.const 1) (local.get $y)))
-    (if (i32.lt_u (local.get $y) (local.get $max_y))
+    (local.set $y (i32.add (i32.const 1) $(y)))
+    (if (i32.lt_u $(y) $(max_y))
       (then (br $y_loop)))))

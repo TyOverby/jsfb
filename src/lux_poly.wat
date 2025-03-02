@@ -20,9 +20,9 @@
         (i32.sub (i32.const 0) (local.get $v0x))
         (local.get $v1y))
       (i32.mul (local.get $v0y) (local.get $v1x))))
-  (local.get $a)
-  (local.get $b)
-  (local.get $c))
+  $(a)
+  $(b)
+  $(c))
 
 (func $lux/line_func_simd
   (param $v0x i32) 
@@ -63,6 +63,6 @@
         (i32x4.sub (i32x4.splat (i32.const 0)) (local.get $v0xv))
         (local.get $v1yv))
       (i32x4.mul (local.get $v0yv) (local.get $v1xv))))
-  (local.get $a)
-  (local.get $b)
-  (local.get $c))
+  $(a)
+  $(b)
+  $(c))
