@@ -241,21 +241,17 @@
       (i32x4.eq (v128.const i32x4 0 0 0 0))
       ;; (v128.and (v128.const i32x4 -1 0 0 0))
       (local.set $mask)
-      (if (v128.any_true $(mask))
-        (then (if (i32x4.all_true $(mask))
-           (then (v128.store if_care_about_alignment(align=4) $(cursor) $(rgba_4)))
-           (else 
-             (i32x4.extract_lane 0 $(mask))
-             (if (then (i32.store offset=0 $(cursor) $(rgba))))
-
-             (i32x4.extract_lane 1 $(mask))
-             (if (then (i32.store offset=4 $(cursor) $(rgba))))
-
-             (i32x4.extract_lane 2 $(mask))
-             (if (then (i32.store offset=8 $(cursor) $(rgba))))
-
-             (i32x4.extract_lane 3 $(mask))
-             (if (then (i32.store offset=12 $(cursor) $(rgba))))))))
+      (if (i32x4.all_true $(mask))
+        (then (v128.store if_care_about_alignment(align=4) $(cursor) $(rgba_4)))
+        (else (if (v128.any_true $(mask)) (then
+          (if (i32x4.extract_lane 0 $(mask))
+              (then (i32.store offset=0 $(cursor) $(rgba))))
+          (if (i32x4.extract_lane 1 $(mask))
+              (then (i32.store offset=4 $(cursor) $(rgba))))
+          (if (i32x4.extract_lane 2 $(mask))
+              (then (i32.store offset=8 $(cursor) $(rgba))))
+          (if (i32x4.extract_lane 3 $(mask))
+              (then (i32.store offset=12 $(cursor) $(rgba))))))))
 
       ;; CX0 += CC0.A;
       (local.set $cx0v (i32x4.add $(cx0v) $(cc0av_adv)))
@@ -281,8 +277,7 @@
     ;; loop trailer
     (local.set $y (i32.add (i32.const 1) $(y)))
     (local.set $cursor_y (i32.add $(w_4) $(cursor_y)))
-    (if (i32.le_u $(y) $(max_y))
-      (then (br $y_loop)))))
+    (if (i32.le_u $(y) $(max_y)) (then (br $y_loop)))))
 
 (func $lux/many_triangles_simd
   (param $buf i32)

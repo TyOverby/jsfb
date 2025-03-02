@@ -48,7 +48,7 @@
       (param $y i32)
       (result i32)
   (if (i32.lt_s $(y) $(x))
-    (then (local.set $x $(y))))
+    (then (return $(y))))
   $(x))
 
 (func $lux/max32s
@@ -61,6 +61,13 @@
 
 (func $lux/assert (param $p i32)
   (if $(p) (then nop) (else unreachable)))
+
+
+#if DEBUG
+(func $lux/debug_assert (param $p i32) (call $lux/assert $(p)))
+#else 
+(func $lux/debug_assert (param $p i32) nop)
+#endif
 
 (func $lux/round_down_to_nearest_multiple_of_4
       (param $x i32)
