@@ -21,10 +21,7 @@
   (local.set $char_height (i32.load (i32.add (i32.const 8) $(char_data))))
   (local.set $char_data (i32.add $(char_data) (i32.const 12)))
 
-  (local.set $offset_y
-    (i32.add 
-      (i32.mul $(w) $(y))
-      $(x)))
+  (local.set $offset_y (i32.add (i32.mul $(w) $(y)) $(x)))
 
   (loop $y_loop
     (if (i32.eq $(i) $(char_height))
@@ -38,11 +35,7 @@
             (then nop)
             (else 
               (if (i32.load8_u $(char_data)) 
-                (then 
-                  (call $lux/put_pixel_raw
-                    $(buf)
-                    $(offset_x)
-                    $(rgba))))
+                (then (call $lux/put_pixel_raw $(buf) $(offset_x) $(rgba))))
 
               (local.set $offset_x (i32.add $(offset_x) (i32.const 1)))
               (local.set $char_data (i32.add $(char_data) (i32.const 1)))
@@ -67,7 +60,6 @@
   (param $w i32) 
   (param $h i32) 
   (result i32)
-
   
   (local $i i32)
   (local $current_code i32)
@@ -75,7 +67,6 @@
 
   ;;(local.set $font_table (i32.add $(font_table) (i32.const 8)))
   (local.set $i (i32.const 0))
-
 
   (loop $loop
     (local.set $current_code 
@@ -88,10 +79,8 @@
             $(buf)
             (i32.load (i32.add (i32.const 4) $(font_table)))
             $(rgba)
-            $(x)
-            $(y)
-            $(w)
-            $(h))))
+            $(x) $(y)
+            $(w) $(h))))
           (else 
      (if (i32.eq $(current_code) (i32.const 0)) 
       (then nop)
@@ -118,10 +107,8 @@
     $(font_table)
     $(char)
     (call $lux/rgb2int $(r) $(g) $(b))
-    $(x)
-    $(y)
-    $(w)
-    $(h)))
+    $(x) $(y)
+    $(w) $(h)))
 
 (func $lux/string
   (param $buf i32) 
@@ -142,17 +129,14 @@
 
   (local.set $initial_x $(x))
 
-  (local.set $rgba 
-    (call $lux/rgb2int $(r) $(g) $(b)))
+  (local.set $rgba (call $lux/rgb2int $(r) $(g) $(b)))
 
   (block $leave_loop
-    (if (i32.eq (i32.const 0) $(str_ptr))
-      (then (br $leave_loop)))
+    (if (i32.eq (i32.const 0) $(str_ptr)) (then (br $leave_loop)))
 
     (loop $loop 
       (local.set $char (i32.load16_u $(str_ptr)))
-      (if (i32.eq $(char) (i32.const 0))
-          (then (br $leave_loop)))
+      (if (i32.eq $(char) (i32.const 0)) (then (br $leave_loop)))
 
       (if (i32.eq $(char) (i32.const 10))
         (then
@@ -167,10 +151,8 @@
           $(font_table)
           $(char)
           $(rgba)
-          $(x)
-          $(y)
-          $(w)
-          $(h)))
+          $(x) $(y)
+          $(w) $(h)))
 
       (local.set $x (i32.add $(x) $(char_width)))
 

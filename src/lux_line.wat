@@ -18,18 +18,13 @@
   (local $yi i32)
   (local $stop i32)
 
-
-  (local.set $rgba 
-    (call $lux/rgb2int 
-      $(r) 
-      $(g)
-      $(b)))
+  (local.set $rgba (call $lux/rgb2int $(r) $(g) $(b)))
 
   ;; dx = x1 - x0
-  (local.set $dx (i32.sub (local.get $x1) (local.get $x0)))
+  (local.set $dx (i32.sub $(x1) $(x0)))
 
   ;; dy = y1 - y0
-  (local.set $dy (i32.sub (local.get $y1) (local.get $y0)))
+  (local.set $dy (i32.sub $(y1) $(y0)))
 
   ;; yi = 1
   (local.set $yi (i32.const 1))
@@ -43,24 +38,16 @@
       (local.set $dy (i32.sub (i32.const 0) $(dy)))))
 
   ;; D = 2 * dy - dx
-  (local.set $D 
-    (i32.sub 
-      (i32.mul $(dy) (i32.const 2)) 
-      $(dx)))
+  (local.set $D (i32.sub (i32.mul $(dy) (i32.const 2)) $(dx)))
 
   ;; y = y0
-  (local.set $y (local.get $y0))
+  (local.set $y $(y0))
 
   ;; for x from x0 to x1
-  (local.set $x (local.get $x0))
+  (local.set $x $(x0))
   (loop $loop 
     ;; plot(x, y)
-    (call $lux/put_pixel 
-      $(buf)
-      $(rgba)
-      $(x)
-      $(y)
-      $(w))
+    (call $lux/put_pixel $(buf) $(rgba) $(x) $(y) $(w))
     
     ;; if D > 0
     (if (i32.gt_s $(D) (i32.const 0))
@@ -72,17 +59,13 @@
         (local.set $D 
           (i32.add
             $(D) 
-            (i32.mul 
-              (i32.const 2) 
-              (i32.sub $(dy) $(dx))))))
+            (i32.mul (i32.const 2) (i32.sub $(dy) $(dx))))))
       (else 
         ;; D = D + 2 * dy
         (local.set $D 
-          (i32.add
-            $(D) 
-            (i32.mul (i32.const 2) $(dy))))))
+          (i32.add $(D) (i32.mul (i32.const 2) $(dy))))))
 
-    (local.set $stop (i32.ne $(x) (local.get $x1)))
+    (local.set $stop (i32.ne $(x) $(x1)))
     (local.set $x (i32.add (i32.const 1) $(x)))
     (br_if $loop $(stop))))
 
@@ -99,35 +82,26 @@
 
   (call $lux/line_low 
     $(buf)
-    $(r)
-    $(g)
-    $(b)
-    (local.get $x0)
-    (local.get $y0)
-    (local.get $x1)
-    (local.get $y1)
+    $(r) $(g) $(b)
+    $(x0) $(y0)
+    $(x1) $(y1)
     $(w))
 
   (call $lux/line_low 
     $(buf)
-    $(r)
-    $(g)
-    $(b)
-    (local.get $x0)
-    (i32.add (local.get $y0) (i32.const 1))
-    (local.get $x1)
-    (i32.add (local.get $y1) (i32.const 1))
+    $(r) $(g) $(b) $(x0)
+    (i32.add $(y0) (i32.const 1))
+    $(x1)
+    (i32.add $(y1) (i32.const 1))
     $(w))
 
   (call $lux/line_low 
     $(buf)
-    $(r)
-    $(g)
-    $(b)
-    (local.get $x0)
-    (i32.sub (local.get $y0) (i32.const 1))
-    (local.get $x1)
-    (i32.sub (local.get $y1) (i32.const 1))
+    $(r) $(g) $(b)
+    $(x0)
+    (i32.sub $(y0) (i32.const 1))
+    $(x1)
+    (i32.sub $(y1) (i32.const 1))
     $(w)))
 
 (func $lux/line_high
@@ -151,17 +125,13 @@
   (local $stop i32)
 
 
-  (local.set $rgba 
-    (call $lux/rgb2int 
-      $(r) 
-      $(g)
-      $(b)))
+  (local.set $rgba (call $lux/rgb2int $(r) $(g) $(b)))
 
   ;; dx = x1 - x0
-  (local.set $dx (i32.sub (local.get $x1) (local.get $x0)))
+  (local.set $dx (i32.sub $(x1) $(x0)))
 
   ;; dy = y1 - y0
-  (local.set $dy (i32.sub (local.get $y1) (local.get $y0)))
+  (local.set $dy (i32.sub $(y1) $(y0)))
 
   ;; yx = 1
   (local.set $xi (i32.const 1))
@@ -175,24 +145,16 @@
       (local.set $dx (i32.sub (i32.const 0) $(dx)))))
 
   ;; D = 2 * dx - dy
-  (local.set $D 
-    (i32.sub 
-      (i32.mul $(dx) (i32.const 2)) 
-      $(dy)))
+  (local.set $D (i32.sub (i32.mul $(dx) (i32.const 2)) $(dy)))
 
   ;; x = x0
-  (local.set $x (local.get $x0))
+  (local.set $x $(x0))
 
   ;; for x from x0 to x1
-  (local.set $y (local.get $y0))
+  (local.set $y $(y0))
   (loop $loop 
     ;; plot(x, y)
-    (call $lux/put_pixel 
-      $(buf)
-      $(rgba)
-      $(x)
-      $(y)
-      $(w))
+    (call $lux/put_pixel $(buf) $(rgba) $(x) $(y) $(w))
     
     ;; if D > 0
     (if (i32.gt_s $(D) (i32.const 0))
@@ -204,17 +166,13 @@
         (local.set $D 
           (i32.add
             $(D) 
-            (i32.mul 
-              (i32.const 2) 
-              (i32.sub $(dx) $(dy))))))
+            (i32.mul (i32.const 2) (i32.sub $(dx) $(dy))))))
       (else 
         ;; D = D + 2 * dx
         (local.set $D 
-          (i32.add
-            $(D) 
-            (i32.mul (i32.const 2) $(dx))))))
+          (i32.add $(D) (i32.mul (i32.const 2) $(dx))))))
 
-    (local.set $stop (i32.ne $(y) (local.get $y1)))
+    (local.set $stop (i32.ne $(y) $(y1)))
     (local.set $y (i32.add (i32.const 1) $(y)))
     (br_if $loop $(stop))))
 
@@ -231,35 +189,27 @@
 
   (call $lux/line_high
     $(buf)
-    $(r)
-    $(g)
-    $(b)
-    (local.get $x0)
-    (local.get $y0)
-    (local.get $x1)
-    (local.get $y1)
+    $(r) $(g) $(b)
+    $(x0) $(y0)
+    $(x1) $(y1)
     $(w))
 
   (call $lux/line_high
     $(buf)
-    $(r)
-    $(g)
-    $(b)
-    (i32.add (local.get $x0) (i32.const 1))
-    (local.get $y0)
-    (i32.add (local.get $x1) (i32.const 1))
-    (local.get $y1)
+    $(r) $(g) $(b)
+    (i32.add $(x0) (i32.const 1))
+    $(y0)
+    (i32.add $(x1) (i32.const 1))
+    $(y1)
     $(w))
 
   (call $lux/line_high
     $(buf)
-    $(r)
-    $(g)
-    $(b)
-    (i32.sub (local.get $x0) (i32.const 1))
-    (local.get $y0)
-    (i32.sub (local.get $x1) (i32.const 1))
-    (local.get $y1)
+    $(r) $(g) $(b)
+    (i32.sub $(x0) (i32.const 1))
+    $(y0)
+    (i32.sub $(x1) (i32.const 1))
+    $(y1)
     $(w))
   )
 
@@ -279,61 +229,45 @@
   ;; if abs(y1 - y0) < abs(x1 - x0)
   (if 
     (i32.le_u
-      (call $lux/abs32 (i32.sub (local.get $y1) (local.get $y0)))
-      (call $lux/abs32 (i32.sub (local.get $x1) (local.get $x0))))
+      (call $lux/abs32 (i32.sub $(y1) $(y0)))
+      (call $lux/abs32 (i32.sub $(x1) $(x0))))
     (then 
       ;; if x0 > x1
-      (if (i32.ge_u (local.get $x0) (local.get $x1))
+      (if (i32.ge_u $(x0) $(x1))
         ;; plotLineLow(x1, y1, x0, y0)
         (then 
           (call $lux/thick_line_low 
             $(buf)
-            $(r)
-            $(g)
-            $(b)
-            (local.get $x1)
-            (local.get $y1)
-            (local.get $x0)
-            (local.get $y0)
+            $(r) $(g) $(b)
+            $(x1) $(y1)
+            $(x0) $(y0)
             $(w)))
         ;; plotLineLow(x0, y0, x1, y1)
         (else 
           (call $lux/thick_line_low 
             $(buf)
-            $(r)
-            $(g)
-            $(b)
-            (local.get $x0)
-            (local.get $y0)
-            (local.get $x1)
-            (local.get $y1)
+            $(r) $(g) $(b)
+            $(x0) $(y0)
+            $(x1) $(y1)
             $(w)))))
     (else 
       ;; if y0 > y1
-      (if (i32.ge_u (local.get $y0) (local.get $y1))
+      (if (i32.ge_u $(y0) $(y1))
         ;; plotLineHigh(x1, y1, x0, y0)
         (then 
           (call $lux/thick_line_high
             $(buf)
-            $(r)
-            $(g)
-            $(b)
-            (local.get $x1)
-            (local.get $y1)
-            (local.get $x0)
-            (local.get $y0)
+            $(r) $(g) $(b)
+            $(x1) $(y1)
+            $(x0) $(y0)
             $(w)))
         ;; plotLineHigh(x0, y0, x1, y1)
         (else 
           (call $lux/thick_line_high
             $(buf)
-            $(r)
-            $(g)
-            $(b)
-            (local.get $x0)
-            (local.get $y0)
-            (local.get $x1)
-            (local.get $y1)
+            $(r) $(g) $(b)
+            $(x0) $(y0)
+            $(x1) $(y1)
             $(w)))))))
 
 (func $lux/h_line
@@ -350,19 +284,14 @@
   (local $cursor i32)
   (local $rgba i32)
 
-  (local.set $rgba 
-    (call $lux/rgb2int 
-      $(r) 
-      $(g)
-      $(b)))
+  (local.set $rgba (call $lux/rgb2int $(r) $(g) $(b)))
 
   (if (i32.lt_s $(x) (i32.const 0))
     (then 
       (local.set $len (i32.sub $(len) $(x)))
       (local.set $x (i32.const 0))))
 
-  (if (i32.gt_u $(y) $(h))
-    (then return))
+  (if (i32.gt_u $(y) $(h)) (then return))
 
   (i32.mul $(y) $(w))
   (i32.add $(x))
@@ -395,19 +324,14 @@
   (local $cursor i32)
   (local $rgba i32)
 
-  (local.set $rgba 
-    (call $lux/rgb2int 
-      $(r) 
-      $(g)
-      $(b)))
+  (local.set $rgba (call $lux/rgb2int $(r) $(g) $(b)))
 
   (if (i32.lt_s $(y) (i32.const 0))
     (then 
       (local.set $len (i32.sub $(len) $(y)))
       (local.set $y (i32.const 0))))
 
-  (if (i32.gt_u $(x) $(w))
-    (then return))
+  (if (i32.gt_u $(x) $(w)) (then return))
 
   (i32.mul $(y) $(w))
   (i32.add $(x))
@@ -417,8 +341,7 @@
 
   (block $exit_loop 
     (loop $loop 
-      (if (i32.le_s $(len) (i32.const 0))
-        (then (br $exit_loop)))
+      (if (i32.le_s $(len) (i32.const 0)) (then (br $exit_loop)))
 
       (i32.store $(cursor) $(rgba))
 

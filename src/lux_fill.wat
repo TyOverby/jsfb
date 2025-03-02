@@ -7,17 +7,11 @@
   (local $rgba i32)
   (local $i i32)
 
-  (local.set $rgba 
-    (call $lux/rgb2int 
-      $(r) 
-      $(g)
-      $(b)))
+  (local.set $rgba (call $lux/rgb2int $(r) $(g) $(b)))
 
   ;; Loop through pixels and write rgba into every memory cell
   (loop $loop 
-    (i32.store 
-      (i32.add $(buf) (i32.mul (i32.const 4) $(i)))
-      $(rgba))
+    (i32.store (i32.add $(buf) (i32.mul (i32.const 4) $(i))) $(rgba))
     (local.set $i (i32.add $(i) (i32.const 1)))
     (br_if $loop (i32.ne $(i) $(pixels)))))
 
@@ -37,12 +31,7 @@
   ;; TODO: handle case where pixels isnt a multiple of 4
 
   (local.set $pixels (i32.div_u $(pixels) (i32.const 4)))
-
-  (local.set $rgba 
-    (call $lux/rgb2int 
-      $(r) 
-      $(g)
-      $(b)))
+  (local.set $rgba (call $lux/rgb2int $(r) $(g) $(b)))
 
   ;; Splat 4 of them into a simd value
   (local.set $rgba128 (i32x4.splat $(rgba)))
@@ -51,7 +40,7 @@
   (loop $loop 
     (v128.store align=4 
       (i32.add $(buf) (i32.mul (i32.const 16) $(i)))
-      (local.get $rgba128))
+      $(rgba128))
     (local.set $i (i32.add $(i) (i32.const 1)))
     (br_if $loop (i32.ne $(i) $(pixels)))))
 
@@ -77,21 +66,11 @@
   (local.set $sixteenths (i32.shr_u $(pixels) (i32.const 1)))
 
   (if (i32.lt_u $(sixteenths) (i32.const 1024))
-    (then (call $lux/fill_one_at_a_time
-            $(buf)
-            $(r)
-            $(g)
-            $(b)
-            $(pixels)))
+    (then (call $lux/fill_one_at_a_time $(buf) $(r) $(g) $(b) $(pixels)))
     (else 
       (local.set $cursor_advance (i32.mul $(sixteenths) (i32.const 4)))
       (local.set $cursor (i32.add $(buf) $(cursor_advance)))
-      (call $lux/fill_simd 
-        $(buf)
-        $(r)
-        $(g)
-        $(b)
-        $(sixteenths))
+      (call $lux/fill_simd $(buf) $(r) $(g) $(b) $(sixteenths))
       (block $break_loop
         (loop $loop 
           (if (i32.eq $(i) (i32.const 1))
@@ -109,10 +88,4 @@
       (param $g i32) 
       (param $b i32) 
       (param $pixels i32) 
-
-  (call $lux/fill_memcpy
-    $(buf)
-    $(r)
-    $(g)
-    $(b)
-    $(pixels)))
+  (call $lux/fill_memcpy $(buf) $(r) $(g) $(b) $(pixels)))

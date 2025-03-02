@@ -44,11 +44,7 @@
     (if (i32.ge_u $(min_x) $(buf_w)) (then (br $exit_early)))
     (if (i32.ge_u $(min_y) $(buf_h)) (then (br $exit_early)))
 
-    (local.set $rgba 
-      (call $lux/rgb2int 
-        $(r) 
-        $(g)
-        $(b)))
+    (local.set $rgba (call $lux/rgb2int $(r) $(g) $(b)))
 
     (local.set $i_iters (i32.sub $(max_y) $(min_y)))
     (local.set $k_iters (i32.sub $(max_x) $(min_x)))
@@ -61,13 +57,11 @@
     (local.set $cursor_x $(cursor_y))
 
     (block $exit_loop_y (loop $loop_y
-      (if (i32.ge_u $(i) $(i_iters))
-        (then (br $exit_loop_y)))
+      (if (i32.ge_u $(i) $(i_iters)) (then (br $exit_loop_y)))
 
       (block $exit_loop_x (loop $loop_x
         (if (i32.eq $(k) $(k_iters))
-          (then (local.set $k (i32.const 0))
-                (br $exit_loop_x)))
+          (then (local.set $k (i32.const 0)) (br $exit_loop_x)))
 
         (i32.store 
           $(cursor_x)
@@ -79,9 +73,7 @@
       ))
 
       (local.set $cursor_y 
-        (i32.add 
-          $(cursor_y) 
-          (i32.mul (i32.const 4) $(buf_w))))
+        (i32.add $(cursor_y) (i32.mul (i32.const 4) $(buf_w))))
       (local.set $cursor_x $(cursor_y))
       (local.set $i (i32.add $(i) (i32.const 1)))
       (br $loop_y)
@@ -135,11 +127,7 @@
     (if (i32.ge_u $(min_x) $(buf_w)) (then (br $exit_early)))
     (if (i32.ge_u $(min_y) $(buf_h)) (then (br $exit_early)))
 
-    (local.set $rgba 
-      (call $lux/rgb2int 
-        $(r) 
-        $(g)
-        $(b)))
+    (local.set $rgba (call $lux/rgb2int $(r) $(g) $(b)))
 
     (local.set $rgba_splat (i32x4.splat $(rgba)))
 
@@ -157,8 +145,7 @@
     (local.set $cursor_x $(cursor_y))
 
     (block $exit_loop_y (loop $loop_y
-      (if (i32.ge_u $(i) $(i_iters))
-        (then (br $exit_loop_y)))
+      (if (i32.ge_u $(i) $(i_iters)) (then (br $exit_loop_y)))
 
       (block $exit_loop_x (loop $loop_x
         (if (i32.eq $(k) $(k_iters))
@@ -207,8 +194,7 @@
 
   (block $leave_loop
     (loop $continue_loop
-      (if (i32.eq $(i) $(count))
-         (then (br $leave_loop)))
+      (if (i32.eq $(i) $(count)) (then (br $leave_loop)))
       
       ;; TODO: make a version of tri that takes rgba as a single int
       (local.set $rgba (i32.load (i32.add $(ptr) (i32.const 0))))

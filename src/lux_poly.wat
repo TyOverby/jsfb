@@ -10,16 +10,16 @@
   (local $c i32)
 
   ;; result.A = v1.y - v0.y; 
-  (local.set $a (i32.sub (local.get $v1y) (local.get $v0y)))
+  (local.set $a (i32.sub $(v1y) $(v0y)))
   ;; result.B = -v1.x + v0.x; 
-  (local.set $b (i32.add (i32.sub (i32.const 0) (local.get $v1x)) (local.get $v0x)))
+  (local.set $b (i32.add (i32.sub (i32.const 0) $(v1x)) $(v0x)))
   ;; result.C = -v0.x * v1.y + v0.y * v1.x;
   (local.set $c 
     (i32.add
       (i32.mul
-        (i32.sub (i32.const 0) (local.get $v0x))
-        (local.get $v1y))
-      (i32.mul (local.get $v0y) (local.get $v1x))))
+        (i32.sub (i32.const 0) $(v0x))
+        $(v1y))
+      (i32.mul $(v0y) $(v1x))))
   $(a)
   $(b)
   $(c))
@@ -42,27 +42,27 @@
 
   (local.set $v0xv 
     (i32x4.add
-      (i32x4.splat (local.get $v0x))
+      (i32x4.splat $(v0x))
       (v128.const i32x4 0 -1 -2 -3)))
-  (local.set $v0yv (i32x4.splat (local.get $v0y)))
+  (local.set $v0yv (i32x4.splat $(v0y)))
 
   (local.set $v1xv 
     (i32x4.add
-      (i32x4.splat (local.get $v1x))
+      (i32x4.splat $(v1x))
       (v128.const i32x4 0 -1 -2 -3)))
-  (local.set $v1yv (i32x4.splat (local.get $v1y)))
+  (local.set $v1yv (i32x4.splat $(v1y)))
 
   ;; result.A = v1.y - v0.y; 
-  (local.set $a (i32x4.sub (local.get $v1yv) (local.get $v0yv)))
+  (local.set $a (i32x4.sub $(v1yv) $(v0yv)))
   ;; result.B = -v1.x + v0.x; 
-  (local.set $b (i32x4.add (i32x4.sub (i32x4.splat (i32.const 0)) (local.get $v1xv)) (local.get $v0xv)))
+  (local.set $b (i32x4.add (i32x4.sub (i32x4.splat (i32.const 0)) $(v1xv)) $(v0xv)))
   ;; result.C = -v0.x * v1.y + v0.y * v1.x;
   (local.set $c 
     (i32x4.add
       (i32x4.mul
-        (i32x4.sub (i32x4.splat (i32.const 0)) (local.get $v0xv))
-        (local.get $v1yv))
-      (i32x4.mul (local.get $v0yv) (local.get $v1xv))))
-  $(a)
-  $(b)
-  $(c))
+        (i32x4.sub (i32x4.splat (i32.const 0)) $(v0xv))
+        $(v1yv))
+      (i32x4.mul $(v0yv) $(v1xv))))
+
+  ;; return triple
+  $(a) $(b) $(c))

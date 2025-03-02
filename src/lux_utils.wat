@@ -33,10 +33,7 @@
     (param $w i32) 
   (local $offset i32)
 
-  (local.set $offset 
-    (i32.add 
-      (i32.mul $(w) $(y))
-      $(x)))
+  (local.set $offset (i32.add $(x) (i32.mul $(w) $(y))))
   (call $lux/put_pixel_raw $(buf) $(offset) $(rgba)))
 
 (func $lux/abs32
@@ -62,12 +59,8 @@
     (then (local.set $x $(y))))
   $(x))
 
-(func $lux/assert 
-      (param $p i32)
-  (if $(p) 
-    (then nop)
-    (else unreachable)))
-
+(func $lux/assert (param $p i32)
+  (if $(p) (then nop) (else unreachable)))
 
 (func $lux/round_down_to_nearest_multiple_of_4
       (param $x i32)
@@ -82,13 +75,9 @@
 (func $lux/is_multiple_of_16
       (param $x i32)
       (result i32)
-  (i32.eq 
-    (i32.const 0)
-    (i32.and $(x) (i32.const 15))))
+  (i32.eq (i32.const 0) (i32.and $(x) (i32.const 15))))
 
 (func $lux/is_multiple_of_4
       (param $x i32)
       (result i32)
-  (i32.eq 
-    (i32.const 0)
-    (i32.and $(x) (i32.const 3))))
+  (i32.eq (i32.const 0) (i32.and $(x) (i32.const 3))))
