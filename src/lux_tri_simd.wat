@@ -71,12 +71,7 @@
   (local.set $w_4 (i32.mul (i32.const 4) $(w)))
 
   ;; color
-  (local.set $rgba 
-    (call $lux/rgb2int 
-      $(r) 
-      $(g)
-      $(b)))
-
+  (local.set $rgba (call $lux/rgb2int $(r) $(g) $(b)))
   (local.set $rgba_4 (i32x4.splat $(rgba)))
 
   ;; let min_x = max(0, min(v00x, min(v01x, min(v10x, v11x))))
@@ -239,8 +234,8 @@
       v128.or
       v128.or
       (i32x4.eq (v128.const i32x4 0 0 0 0))
-      ;; (v128.and (v128.const i32x4 -1 0 0 0))
       (local.set $mask)
+
       (if (i32x4.all_true $(mask))
         (then (v128.store if_care_about_alignment(align=4) $(cursor) $(rgba_4)))
         (else (if (v128.any_true $(mask)) (then
@@ -323,7 +318,8 @@
       (local.set $p3x (i32.load (i32.add $(ptr) (i32.const 20))))
       (local.set $p3y (i32.load (i32.add $(ptr) (i32.const 24))))
 
-      (call $lux/tri_simd $(buf)
+      (call $lux/tri_simd
+        $(buf)
         $(p1x) $(p1y) 
         $(p2x) $(p2y) 
         $(p3x) $(p3y)

@@ -80,6 +80,7 @@
     ))
   ))
 
+;; wtf is this function? why use it?
 (func $lux/simd_rect
   (param $buf i32)
   (param $r i32)
@@ -152,9 +153,7 @@
           (then (local.set $k (i32.const 0))
                 (br $exit_loop_x)))
 
-        (v128.store 
-          $(cursor_x)
-          $(rgba_splat))
+        (v128.store $(cursor_x) $(rgba_splat))
 
         (local.set $cursor_x (i32.add $(cursor_x) (i32.const 16)))
         (local.set $k (i32.add $(k) (i32.const 1)))
@@ -170,6 +169,41 @@
       (br $loop_y)
     ))
   ))
+
+(func $lux/rect
+  (param $buf i32)
+  (param $r i32)
+  (param $g i32)
+  (param $b i32)
+  (param $min_x i32)
+  (param $min_y i32)
+  (param $w i32)
+  (param $h i32)
+  (param $buf_w i32)
+  (param $buf_h i32)
+
+  (local $simd_w i32)
+  (local $basic_w i32)
+
+  (local.set $simd_w (call $lux/round_down_to_nearest_multiple_of_4 $(w)))
+  (local.set $basic_w (i32.sub $(w) $(simd_w)))
+
+  (if $(simd_w) 
+    (then (call $lux/simd_rect 
+      $(buf)
+      $(r) $(g) $(b)
+      $(min_x) $(min_y) 
+      $(simd_w) $(h) 
+      $(buf_w) $(buf_h))))
+
+  (if $(basic_w) 
+    (then (call $lux/basic_rect 
+      $(buf)
+      $(r) $(g) $(b)
+      (i32.add $(min_x) $(simd_w)) $(min_y) 
+      $(basic_w) $(h) 
+      $(buf_w) $(buf_h))))
+  )
 
 (func $lux/many_rectangles
   (param $buf i32)
@@ -208,7 +242,7 @@
       (local.set $pw (i32.load (i32.add $(ptr) (i32.const 12))))
       (local.set $ph (i32.load (i32.add $(ptr) (i32.const 16))))
 
-      (call $lux/basic_rect $(buf)
+      (call $lux/rect $(buf)
         $(r) $(g) $(b)
         $(px) $(py) 
         $(pw) $(ph) 

@@ -1,42 +1,39 @@
-const canvas = document.querySelector("canvas");
-const ctx = canvas.getContext('2d');
-
 const w = 4096, h = 2160;
 let zoom = 1;
 
-observe(canvas);
+let canvas = { width : w, height: h }
 
 async function main() {
-    const walloc = await WebAssembly.instantiateStreaming(fetch("walloc.wasm"), {});
-    window.walloc = walloc;
-    const module = await WebAssembly.instantiateStreaming(fetch("lux.wasm"), {
+    const walloc = await WebAssembly.instantiate(readbuffer("../walloc.wasm"), {});
+    globalThis.walloc = walloc;
+    const module = await WebAssembly.instantiate(readbuffer("../lux.wasm"), {
         runtime: walloc.instance.exports
     });
-    window.module = module;
+    globalThis.module = module;
 
     function malloc(n) {
         let r = walloc.instance.exports.malloc(n);
         if (r === 0) { throw new Error("malloc failed!"); }
         return r;
     }
-    window.malloc = malloc;
+    globalThis.malloc = malloc;
 
     function malloc_dv(n) {
         let ptr = malloc(n);
         return [ptr, new DataView(walloc.instance.exports.memory.buffer, ptr, n)];
     }
-    window.malloc_dv = malloc_dv;
+    globalThis.malloc_dv = malloc_dv;
 
     function free(p) {
         return walloc.instance.exports.free(p);
     }
-    window.free = free;
+    globalThis.free = free;
 
     const buf_size = (w * h * 4);
     const buf = malloc(buf_size);
 
     async function load_font(json_file, scale) {
-        const letters = await (await fetch(json_file)).json();
+        const letters = JSON.parse(read("../" + json_file));
         // hack 
         letters.push({
           char: " ",
@@ -119,6 +116,10 @@ async function main() {
         module.instance.exports.rect(buf, r, g, b, min_x, min_y, rw, rh, w, h)
     }
 
+    function basic_rect(buf, r, g, b, min_x, min_y, rw, rh) {
+        module.instance.exports.rect(buf, r, g, b, min_x, min_y, rw, rh, w, h)
+    }
+
     function h_line(buf, r, g, b, x, y, len) {
         module.instance.exports.h_line(buf, r, g, b, x, y, len, w, h)
     }
@@ -181,7 +182,6 @@ async function main() {
     let last_frame_delta = 0.0;
 
     function loop() {
-        resizeCanvasToDisplaySize(canvas, zoom);
         const before = performance.now();
         
         { // clear screen
@@ -291,14 +291,14 @@ async function main() {
         }
 
         { // small thing in the corner
-            rect(buf, 255, 0, 0, 1, 1, 3, 3);
+            basic_rect(buf, 255, 0, 0, 1, 1, 3, 3);
             h_line(buf, 0, 255, 0, 1, 2, 3);
             v_line(buf, 0, 0, 255, 2, 1, 3);
         }
 
         { // fps counter
             const last_frame_fps = Math.ceil(1 / (last_frame_delta / 1000));
-            const s = last_frame_fps + "  fps";
+            const s = "" + last_frame_fps;
             let width = s.length * 14;
             let height = 20;
             let x_offset = canvas.width - width - 8;
@@ -318,7 +318,7 @@ async function main() {
         }
 
         { // frame duration counter
-            const s = last_frame_delta.toFixed(2) + " ms/f";
+            const s = last_frame_delta.toFixed(2);
             let width = s.length * 14;
             let height = 20;
             let x_offset = canvas.width - width - 8;
@@ -338,25 +338,18 @@ async function main() {
             free(string_ptr);
         }
 
-        { // actually draw to canvas 
-            const uint8_array = new Uint8ClampedArray(walloc.instance.exports.memory.buffer, buf, buf_size);
-            window.uint8 = uint8_array;
-            const img_buffer = new ImageData(uint8_array, w, h);
-            window.img_buffer = img_buffer;
-            ctx.putImageData(img_buffer, 0, 0, 0, 0, w, h);
-        }
-
         { // set fps for next frame 
             let after = performance.now();
             let delta = after - before;
-            // console.log(delta);
+            console.log(delta);
             last_frame_delta = delta;
         }
 
-        window.requestAnimationFrame(loop);
-        //setTimeout(loop,0);
+       if (true) {
+         loop();
+       }
     }
 
-    window.requestAnimationFrame(loop);
+    loop();
 }
 main()

@@ -94,7 +94,7 @@ const js_rect = ({canvas_w, canvas_h, x, y, w, h, r, g, b}) => (params) => {
 const wasm_basic_rect = ({canvas_w, canvas_h, x, y, w, h, r, g, b}) => (params) => {
     const {calloc, walloc, lux} = params;
     const { region_dv, dv, ptr } = overallocate_img_buf(params, canvas_w, canvas_h);
-    lux.basic_rect(ptr, r, g, b, x, y, w, h, canvas_w, canvas_h);
+    lux.rect(ptr, r, g, b, x, y, w, h, canvas_w, canvas_h);
     return region_dv;
 }
 
